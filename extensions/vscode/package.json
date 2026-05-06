@@ -21,7 +21,7 @@
   "displayName": "Continue - open-source AI code agent",
   "pricing": "Free",
   "description": "The leading open-source AI code agent",
-  "publisher": "Continue",
+  "publisher": "Tea-ching",
   "engines": {
     "vscode": "^1.70.0",
     "node": ">=20.20.1"
