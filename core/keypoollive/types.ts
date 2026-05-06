@@ -165,3 +165,20 @@ export interface AiConfig {
   /** Keyed by a human-readable provider name, e.g. "groq", "anthropic". */
   providers: Record<string, AiProvider>;
 }
+
+/**
+ * KeypoolLive configuration block from ~/.continue/config.yaml.
+ * Each field can be overridden by a corresponding environment variable.
+ */
+export interface KeypoolLiveConfig {
+  /** Vault URL — overridden by KEYPOOL_LIVE_VAULT_URL */
+  vaultUrl?: string;
+  /** Decryption secret — overridden by KEYPOOL_LIVE_SECRET */
+  secret?: string;
+  /** Route requests through Cloudflare AI Gateway — overridden by KEYPOOL_LIVE_USE_GATEWAY */
+  useGateway?: boolean;
+  /** Cloudflare AI Gateway authorization token — overridden by KEYPOOL_LIVE_GATEWAY_SECRET */
+  gatewaySecret?: string;
+  /** Cloudflare AI Gateway ID — overridden by KEYPOOL_LIVE_GATEWAY_ID */
+  gatewayId?: string;
+}

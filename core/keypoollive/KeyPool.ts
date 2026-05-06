@@ -25,6 +25,7 @@
 // Manages pool of API keys with round-robin rotation
 import {
   AiVaultConfig,
+  KeypoolLiveConfig,
   ResolvedApiConfig,
   VaultKey,
   VaultModel,
@@ -184,10 +185,7 @@ export function resolveNextApiConfig(
   };
 }
 
-/**
- * Builds model descriptions from vault
- */
-export function buildModelDescriptions(vault: AiVaultConfig): Array<{
+export type ModelDescription = {
   title: string;
   provider: string;
   model: string;
@@ -195,18 +193,23 @@ export function buildModelDescriptions(vault: AiVaultConfig): Array<{
   apiBase?: string;
   contextLength?: number;
   completionOptions?: { maxTokens?: number };
-}> {
-  const descriptions: ReturnType<typeof buildModelDescriptions> = [];
+  requestOptions?: { headers?: Record<string, string> };
+};
+
+/**
+ * Builds model descriptions from vault, routing through Cloudflare AI Gateway
+ * when gateway config is provided and the provider has gatewayEndpoint/gatewayModelPrefix.
+ */
+export function buildModelDescriptions(
+  vault: AiVaultConfig,
+  kplConfig?: KeypoolLiveConfig,
+): ModelDescription[] {
+  const useGateway =
+    (kplConfig?.useGateway ?? false) && !!kplConfig?.gatewaySecret;
+
+  const descriptions: ModelDescription[] = [];
 
   for (const [providerName, provider] of Object.entries(vault.providers)) {
-    const continueProvider = mapToContinueProvider(
-      providerName,
-      provider.protocol,
-    );
-    if (!continueProvider) {
-      continue;
-    }
-
     const initialKey = provider.keys.find((k) => k.type !== "expired");
     if (!initialKey) {
       continue;
@@ -215,19 +218,51 @@ export function buildModelDescriptions(vault: AiVaultConfig): Array<{
     const chatModels = provider.models.filter((m) => m.usage === "chat");
     for (const model of chatModels) {
       const tags = model.tags.join(", ");
-      descriptions.push({
-        title: `[KeypoolLive] ${providerName}/${model.id} (${tags})`,
-        provider: continueProvider,
-        model: model.id,
-        apiKey: initialKey.key,
-        apiBase: provider.endpoint.endsWith("/")
-          ? provider.endpoint
-          : `${provider.endpoint}/`,
-        contextLength: model.contextWindow,
-        completionOptions: {
-          maxTokens: model.maxOutputTokens,
-        },
-      });
+
+      if (
+        useGateway &&
+        provider.gatewayEndpoint &&
+        provider.gatewayModelPrefix
+      ) {
+        const base = provider.gatewayEndpoint.endsWith("/")
+          ? provider.gatewayEndpoint
+          : `${provider.gatewayEndpoint}/`;
+
+        descriptions.push({
+          title: `[KeypoolLive] ${providerName}/${model.id} (${tags})`,
+          provider: "openai", // Cloudflare AI Gateway is OpenAI-compatible
+          model: `${provider.gatewayModelPrefix}/${model.id}`,
+          apiKey: initialKey.key,
+          apiBase: base,
+          contextLength: model.contextWindow,
+          completionOptions: { maxTokens: model.maxOutputTokens },
+          requestOptions: {
+            headers: {
+              "cf-aig-authorization": `Bearer ${kplConfig!.gatewaySecret}`,
+            },
+          },
+        });
+      } else {
+        const continueProvider = mapToContinueProvider(
+          providerName,
+          provider.protocol,
+        );
+        if (!continueProvider) {
+          continue;
+        }
+
+        descriptions.push({
+          title: `[KeypoolLive] ${providerName}/${model.id} (${tags})`,
+          provider: continueProvider,
+          model: model.id,
+          apiKey: initialKey.key,
+          apiBase: provider.endpoint.endsWith("/")
+            ? provider.endpoint
+            : `${provider.endpoint}/`,
+          contextLength: model.contextWindow,
+          completionOptions: { maxTokens: model.maxOutputTokens },
+        });
+      }
     }
   }
 

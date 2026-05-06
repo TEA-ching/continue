@@ -1,4 +1,5 @@
 import fs from "fs";
+import { parse as parseYaml } from "yaml";
 
 import {
   AssistantUnrolled,
@@ -458,16 +459,49 @@ export default async function doLoadConfig(options: {
     const { injectVaultModels, setVaultUrl } = await import(
       "../../keypoollive/VaultConfigInjector.js"
     );
-    const ideSettingsAny = (await ide.getIdeSettings()) as any;
-    const vaultUrl =
-      process.env.KEYPOOL_LIVE_VAULT_URL ||
-      ideSettingsAny?.["continue.keypoollive.vaultUrl"];
-    if (vaultUrl) {
-      setVaultUrl(vaultUrl);
+    type KeypoolLiveConfig =
+      import("../../keypoollive/types.js").KeypoolLiveConfig;
+
+    // Read keypoollive section from config.yaml, then apply env var overrides
+    let kplFromYaml: Partial<KeypoolLiveConfig> = {};
+    try {
+      if (fs.existsSync(configYamlPath)) {
+        const raw = fs.readFileSync(configYamlPath, "utf-8");
+        const parsed = parseYaml(raw) as any;
+        kplFromYaml = parsed?.keypoollive ?? {};
+      }
+    } catch {
+      // Ignore — config-yaml handles normal config errors separately
+    }
+
+    const kplConfig: KeypoolLiveConfig = {
+      vaultUrl: process.env.KEYPOOL_LIVE_VAULT_URL || kplFromYaml.vaultUrl,
+      secret: process.env.KEYPOOL_LIVE_SECRET || kplFromYaml.secret,
+      useGateway:
+        process.env.KEYPOOL_LIVE_USE_GATEWAY !== undefined
+          ? process.env.KEYPOOL_LIVE_USE_GATEWAY === "true"
+          : kplFromYaml.useGateway,
+      gatewaySecret:
+        process.env.KEYPOOL_LIVE_GATEWAY_SECRET || kplFromYaml.gatewaySecret,
+      gatewayId: process.env.KEYPOOL_LIVE_GATEWAY_ID || kplFromYaml.gatewayId,
+    };
+
+    if (kplConfig.vaultUrl) {
+      // If secret comes from YAML (not env), set the env var so AiVault.ts picks it up
+      if (kplConfig.secret && !process.env.KEYPOOL_LIVE_SECRET) {
+        process.env.KEYPOOL_LIVE_SECRET = kplConfig.secret;
+      }
+
+      const mode =
+        kplConfig.useGateway && kplConfig.gatewaySecret
+          ? `gateway (id=${kplConfig.gatewayId})`
+          : "direct";
+      console.log(`[KeypoolLive] Vault URL configured, mode=${mode}`);
+
+      setVaultUrl(kplConfig.vaultUrl, kplConfig);
       newConfig = await injectVaultModels(newConfig, ideSettings, llmLogger);
 
-      // Re-run model selection rectification after dynamic model injection,
-      // otherwise persisted selections for injected models fall back.
+      // Re-run model selection rectification after dynamic model injection
       newConfig = rectifySelectedModelsFromGlobalContext(newConfig, profileId);
     }
   } catch (error) {

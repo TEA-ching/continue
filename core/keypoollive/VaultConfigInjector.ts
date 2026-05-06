@@ -27,16 +27,24 @@ import { ContinueConfig, ILLM, ILLMLogger } from "../index.js";
 import { loadAiVault } from "./AiVault.js";
 import { buildModelDescriptions } from "./KeyPool.js";
 import { configureSessionKeyManager } from "./SessionKeyManager.js";
-import { AiVaultConfig } from "./types.js";
+import { AiVaultConfig, KeypoolLiveConfig } from "./types.js";
 
 let vaultUrl: string | null = null;
+let cachedVaultLlms: ILLM[] | null = null;
+let currentKplConfig: KeypoolLiveConfig | null = null;
 
 /**
- * Sets the vault URL
+ * Sets the vault URL and optional KeypoolLive gateway config.
+ * Invalidates model cache when config changes.
  */
-export function setVaultUrl(url: string): void {
+export function setVaultUrl(url: string, kplConfig?: KeypoolLiveConfig): void {
+  const prevConfig = JSON.stringify(currentKplConfig);
+  currentKplConfig = kplConfig ?? null;
   vaultUrl = url;
   configureSessionKeyManager(url);
+  if (JSON.stringify(currentKplConfig) !== prevConfig) {
+    cachedVaultLlms = null;
+  }
 }
 
 /**
@@ -47,7 +55,10 @@ async function buildLlmsFromVault(
   ideSettings: any,
   llmLogger: ILLMLogger,
 ): Promise<ILLM[]> {
-  const descriptions = buildModelDescriptions(vault);
+  const descriptions = buildModelDescriptions(
+    vault,
+    currentKplConfig ?? undefined,
+  );
   const llms: ILLM[] = [];
 
   // Dynamically import llmFromDescription to avoid circular dependencies
