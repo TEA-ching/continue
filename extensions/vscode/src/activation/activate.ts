@@ -3,6 +3,7 @@ import { Telemetry } from "core/util/posthog";
 import * as vscode from "vscode";
 
 import { VsCodeExtension } from "../extension/VsCodeExtension";
+import { setExtensionContext } from "../util/vscode";
 import { getExtensionVersion, isUnsupportedPlatform } from "../util/util";
 
 import { GlobalContext } from "core/util/GlobalContext";
@@ -10,6 +11,7 @@ import { VsCodeContinueApi } from "./api";
 import setupInlineTips from "./InlineTipManager";
 
 export async function activateExtension(context: vscode.ExtensionContext) {
+  setExtensionContext(context);
   const platformCheck = isUnsupportedPlatform();
   const globalContext = new GlobalContext();
   const hasShownUnsupportedPlatformWarning = globalContext.get(

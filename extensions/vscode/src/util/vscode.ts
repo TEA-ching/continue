@@ -2,6 +2,12 @@ import { machineIdSync } from "node-machine-id";
 import * as URI from "uri-js";
 import * as vscode from "vscode";
 
+let _extensionContext: vscode.ExtensionContext | undefined;
+
+export function setExtensionContext(context: vscode.ExtensionContext): void {
+  _extensionContext = context;
+}
+
 export function translate(range: vscode.Range, lines: number): vscode.Range {
   return new vscode.Range(
     range.start.line + lines,
@@ -22,7 +28,19 @@ export function getNonce() {
 }
 
 export function getExtensionUri(): vscode.Uri {
-  return vscode.extensions.getExtension("Continue.continue")!.extensionUri;
+  if (_extensionContext) {
+    return _extensionContext.extensionUri;
+  }
+  // Fallback: search all extensions for the one owning this file
+  const ext = vscode.extensions.all.find(
+    (e) => e.extensionUri && __filename.startsWith(e.extensionUri.fsPath),
+  );
+  if (ext) {
+    return ext.extensionUri;
+  }
+  throw new Error(
+    "Extension context not initialized. Call setExtensionContext() during activation.",
+  );
 }
 
 export function getViewColumnOfFile(

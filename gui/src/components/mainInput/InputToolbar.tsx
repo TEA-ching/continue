@@ -47,19 +47,17 @@ interface InputToolbarProps {
   isMainInput?: boolean;
 }
 
-function getVaultProviderNameFromModel(model: any): string | undefined {
+function getVaultInfoFromModel(
+  model: any,
+): { providerName: string; modelId: string } | undefined {
   if (!model?.title?.startsWith("[KeypoolLive]")) {
     return undefined;
   }
-
-  // Prefer serialized provider when available.
-  if (typeof model.provider === "string" && model.provider.length > 0) {
-    return model.provider;
-  }
-
-  // Fallback: parse "[KeypoolLive] provider/model (...)" title format.
-  const match = /^\[KeypoolLive\]\s+([^/]+)\//.exec(model.title);
-  return match?.[1];
+  // Parse "[KeypoolLive] vaultProvider/vaultModelId (tags)" from title.
+  // model.provider is unreliable in gateway mode where it is always "openai".
+  const match = /^\[KeypoolLive\]\s+([^/]+)\/(.+?)\s*\(/.exec(model.title);
+  if (!match) return undefined;
+  return { providerName: match[1], modelId: match[2] };
 }
 
 function InputToolbar(props: InputToolbarProps) {
@@ -77,7 +75,7 @@ function InputToolbar(props: InputToolbarProps) {
   const lastSessionId = useAppSelector((state) => state.session.lastSessionId);
   const isEnterDisabled =
     props.disabled || (isInEdit && codeToEdit.length === 0);
-  const vaultProviderName = getVaultProviderNameFromModel(defaultModel);
+  const vaultInfo = getVaultInfoFromModel(defaultModel);
   const rotateSessionId = currentSessionId || lastSessionId;
 
   const supportsImages =
@@ -117,11 +115,11 @@ function InputToolbar(props: InputToolbarProps) {
             </HoverItem>
           </ToolTip>
           {/* KEYPOOLLIVE VAULT: Add key rotation button for vault models */}
-          {rotateSessionId && vaultProviderName && (
+          {rotateSessionId && vaultInfo && (
             <VaultKeyRotateButton
               sessionId={rotateSessionId}
-              providerName={vaultProviderName}
-              modelId={defaultModel?.model}
+              providerName={vaultInfo.providerName}
+              modelId={vaultInfo.modelId}
             />
           )}
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">

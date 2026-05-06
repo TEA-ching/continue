@@ -194,6 +194,10 @@ export type ModelDescription = {
   contextLength?: number;
   completionOptions?: { maxTokens?: number };
   requestOptions?: { headers?: Record<string, string> };
+  /** Real vault provider name (differs from `provider` in gateway mode where provider="openai") */
+  vaultProviderName: string;
+  /** Real vault model ID (differs from `model` in gateway mode where model has a gateway prefix) */
+  vaultModelId: string;
 };
 
 /**
@@ -241,6 +245,8 @@ export function buildModelDescriptions(
               "cf-aig-authorization": `Bearer ${kplConfig!.gatewaySecret}`,
             },
           },
+          vaultProviderName: providerName,
+          vaultModelId: model.id,
         });
       } else {
         const continueProvider = mapToContinueProvider(
@@ -261,6 +267,8 @@ export function buildModelDescriptions(
             : `${provider.endpoint}/`,
           contextLength: model.contextWindow,
           completionOptions: { maxTokens: model.maxOutputTokens },
+          vaultProviderName: providerName,
+          vaultModelId: model.id,
         });
       }
     }

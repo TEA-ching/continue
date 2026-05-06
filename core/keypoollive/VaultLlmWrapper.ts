@@ -40,6 +40,7 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
   }
 
   const providerName: string = (llm as any)._keypoolProviderName ?? "";
+  const vaultModelId: string | undefined = (llm as any)._keypoolModelId;
 
   return new Proxy(llm, {
     get(target, prop, receiver) {
@@ -57,10 +58,11 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
           this: any,
           ...args: Parameters<typeof original>
         ) {
+          const resolvedModelId = vaultModelId ?? (target as any).model;
           const resolved = await getSessionApiConfig(
             sessionId,
             providerName,
-            (target as any).model,
+            resolvedModelId,
           );
 
           if (resolved) {
@@ -75,7 +77,7 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
                 const newConfig = await rotateSessionKey(
                   sessionId,
                   providerName,
-                  (target as any).model,
+                  resolvedModelId,
                   "key_failure",
                 );
                 if (newConfig) {
