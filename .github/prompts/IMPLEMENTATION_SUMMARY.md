@@ -37,7 +37,7 @@
 
 ## Fichiers modifiés (4 fichiers)
 
-### Modifications minimales avec commentaires FUFUNI VAULT
+### Modifications minimales avec commentaires KEYPOOLLIVE VAULT
 
 | Fichier                                              | Changement                        | Lignes |
 | ---------------------------------------------------- | --------------------------------- | ------ |
@@ -272,7 +272,7 @@ git push origin main
 
 git checkout keypoollive
 git rebase main
-# Résoudre les conflits si nécessaire (chercher "FUFUNI VAULT")
+# Résoudre les conflits si nécessaire (chercher "KEYPOOLLIVE VAULT")
 git push --force-with-lease origin keypoollive
 ```
 
@@ -293,7 +293,7 @@ npm run package
 2. **Imports dynamiques** - Utilise `await import()` pour éviter les circular dependencies
 3. **Sécurité des clés** - Les clés ne sont JAMAIS loggées en intégralité, utiliser `.slice(-6)`
 4. **Compatibilité** - Testé avec v1.3.39, compatible ascendant avec futures versions
-5. **Marqueurs FUFUNI VAULT** - Facilite identification des modifications en cas de rebase
+5. **Marqueurs KEYPOOLLIVE VAULT** - Facilite identification des modifications en cas de rebase
 
 ---
 

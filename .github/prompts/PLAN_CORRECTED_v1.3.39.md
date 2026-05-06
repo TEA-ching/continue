@@ -75,12 +75,12 @@ mkdir -p gui/src/keypoollive
 
 ### Étape 3 : Modifications minimales dans les fichiers existants
 
-#### 3.1 `core/config/profile/doLoadConfig.ts` (FUFUNI VAULT: Injection du coffre)
+#### 3.1 `core/config/profile/doLoadConfig.ts` (KEYPOOLLIVE VAULT: Injection du coffre)
 
 Modification unique à la ligne 490 (avant le `return config;`) :
 
 ```typescript
-// FUFUNI VAULT: Inject vault-sourced models (v1.3.39 compatible)
+// KEYPOOLLIVE VAULT: Inject vault-sourced models (v1.3.39 compatible)
 // Vault injection must happen after all config assembly but before returning
 const { injectVaultModels } = await import(
   "../../keypoollive/VaultConfigInjector.js"
@@ -106,7 +106,7 @@ return config;
 Dans la méthode `activate()` du constructeur, après initialisation de `webviewProtocolPromise` :
 
 ```typescript
-// FUFUNI VAULT: Register vault-related message handlers (v1.3.39)
+// KEYPOOLLIVE VAULT: Register vault-related message handlers (v1.3.39)
 this.webviewProtocolPromise.then((protocol) => {
   const {
     registerVaultHandlers,
@@ -120,7 +120,7 @@ this.webviewProtocolPromise.then((protocol) => {
 À localiser dans le composant chat principal (probablement `gui/src/components/Chat.tsx` ou équivalent) :
 
 ```tsx
-// FUFUNI VAULT: Add key rotation button for vault models (v1.3.39)
+// KEYPOOLLIVE VAULT: Add key rotation button for vault models (v1.3.39)
 import { VaultKeyRotateButton } from "../keypoollive/VaultKeyRotateButton";
 
 // Dans le rendu du chat, ajouter le bouton après le sélecteur de modèle :
@@ -231,7 +231,7 @@ git rebase main
 git push --force-with-lease origin keypoollive
 ```
 
-Tous les conflits potentiels seront dans les fichiers marqués `// FUFUNI VAULT:`, faciles à identifier.
+Tous les conflits potentiels seront dans les fichiers marqués `// KEYPOOLLIVE VAULT:`, faciles à identifier.
 
 ---
 

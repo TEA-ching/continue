@@ -116,7 +116,7 @@ function InputToolbar(props: InputToolbarProps) {
               <ModelSelect />
             </HoverItem>
           </ToolTip>
-          {/* FUFUNI VAULT: Add key rotation button for vault models */}
+          {/* KEYPOOLLIVE VAULT: Add key rotation button for vault models */}
           {rotateSessionId && vaultProviderName && (
             <VaultKeyRotateButton
               sessionId={rotateSessionId}

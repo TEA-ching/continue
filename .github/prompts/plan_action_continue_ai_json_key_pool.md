@@ -348,7 +348,7 @@ Pour faciliter les rebases futurs, suivez ces règles :
 1. **Ne modifiez jamais les fichiers existants de Continue sans raison impérative**. Préférez les **hooks** et les **points d'extension** existants.
 2. **Créez de nouveaux fichiers** dans des sous-dossiers dédiés (ex: `core/keypoollive/`, `extensions/vscode/src/keypoollive/`).
 3. **Les seules modifications dans les fichiers existants** doivent être des ajouts minimaux (une ligne d'import, un appel de fonction) dans des emplacements stables.
-4. **Documentez chaque modification** avec un commentaire `// FUFUNI VAULT:` pour les identifier facilement en cas de conflit.
+4. **Documentez chaque modification** avec un commentaire `// KEYPOOLLIVE VAULT:` pour les identifier facilement en cas de conflit.
 
 ### 5.4 Script de synchronisation automatique
 
@@ -1167,12 +1167,12 @@ Le fichier `core/config/profile/doLoadConfig.ts` est le point où la configurati
 
 // ... existing code ...
 
-// FUFUNI VAULT: Import the vault injector
+// KEYPOOLLIVE VAULT: Import the vault injector
 import { injectVaultModels } from "../../keypoollive/VaultConfigInjector.js";
 
 // ... existing code ...
 
-// FUFUNI VAULT: After building the config, inject vault models
+// KEYPOOLLIVE VAULT: After building the config, inject vault models
 // The original return statement looks something like:
 // return { config, errors };
 // Replace it with:
@@ -2288,7 +2288,7 @@ git diff main..upstream/main -- extensions/vscode/src/extension/VsCodeExtension.
 Toutes nos modifications dans les fichiers existants de Continue doivent être balisées avec un commentaire spécial pour les identifier rapidement :
 
 ```typescript
-// FUFUNI VAULT: [description of change] - v1.0
+// KEYPOOLLIVE VAULT: [description of change] - v1.0
 // This modification adds vault model injection to the config loading pipeline.
 // If this causes a merge conflict, keep the upstream code AND add our
 // injectVaultModels() call after the final config is assembled.
@@ -2299,7 +2299,7 @@ Ce marquage permet de faire une recherche rapide en cas de conflit :
 
 ```bash
 # Find all KeypoolLive-specific modifications in existing files
-grep -rn "FUFUNI VAULT:" --include="*.ts" .
+grep -rn "KEYPOOLLIVE VAULT:" --include="*.ts" .
 ```
 
 ### 13.4 Release process pour le VSIX personnalisé
