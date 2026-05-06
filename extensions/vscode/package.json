@@ -147,6 +147,16 @@
           "type": "number",
           "default": 60,
           "description": "The period of time in minutes between automatic syncs."
+        },
+        "continue.keypoollive.vaultUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "URL of the encrypted KeypoolLive AI vault (ai.json.enc) for accessing pooled API keys."
+        },
+        "continue.keypoollive.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable KeypoolLive vault models in Continue."
         }
       }
     },
@@ -380,6 +390,12 @@
         "command": "continue.openInNewWindow",
         "category": "Continue",
         "title": "Open in new window",
+        "group": "Continue"
+      },
+      {
+        "command": "continue.keypoollive.rotateKey",
+        "category": "Continue",
+        "title": "Rotate KeypoolLive API Key",
         "group": "Continue"
       }
     ],

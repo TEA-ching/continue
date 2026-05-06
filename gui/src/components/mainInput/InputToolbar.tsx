@@ -25,6 +25,7 @@ import { Button } from "../ui";
 import { useFontSize } from "../ui/font";
 import ContextStatus from "./ContextStatus";
 import HoverItem from "./InputToolbar/HoverItem";
+import { VaultKeyRotateButton } from "../../keypoollive/VaultKeyRotateButton";
 
 export interface ToolbarOptions {
   hideUseCodebase?: boolean;
@@ -57,6 +58,7 @@ function InputToolbar(props: InputToolbarProps) {
   const hasReasoningEnabled = useAppSelector(
     (store) => store.session.hasReasoningEnabled,
   );
+  const lastSessionId = useAppSelector((state) => state.session.lastSessionId);
   const isEnterDisabled =
     props.disabled || (isInEdit && codeToEdit.length === 0);
 
@@ -96,6 +98,16 @@ function InputToolbar(props: InputToolbarProps) {
               <ModelSelect />
             </HoverItem>
           </ToolTip>
+          {/* FUFUNI VAULT: Add key rotation button for vault models */}
+          {lastSessionId &&
+            defaultModel &&
+            (defaultModel as any)._fufuniVault && (
+              <VaultKeyRotateButton
+                sessionId={lastSessionId}
+                providerName={(defaultModel as any)._fufuniProviderName}
+                modelId={defaultModel.model}
+              />
+            )}
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">
             {props.toolbarOptions?.hideImageUpload ||
               (supportsImages && (

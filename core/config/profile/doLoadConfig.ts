@@ -453,6 +453,23 @@ export default async function doLoadConfig(options: {
     controlPlaneProxyInfo,
   );
 
+  // FUFUNI VAULT: Inject vault-sourced models (v1.3.39 compatible)
+  try {
+    const { injectVaultModels, setVaultUrl } = await import(
+      "../../keypoollive/VaultConfigInjector.js"
+    );
+    const ideSettingsAny = (await ide.getIdeSettings()) as any;
+    const vaultUrl =
+      process.env.KEYPOOL_LIVE_VAULT_URL ||
+      ideSettingsAny?.["continue.keypoollive.vaultUrl"];
+    if (vaultUrl) {
+      setVaultUrl(vaultUrl);
+      newConfig = await injectVaultModels(newConfig, ideSettings, llmLogger);
+    }
+  } catch (error) {
+    console.warn("[KeypoolLive] Failed to inject vault models:", error);
+  }
+
   return {
     config: newConfig,
     errors,

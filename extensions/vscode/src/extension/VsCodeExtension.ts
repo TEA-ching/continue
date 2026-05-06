@@ -43,6 +43,7 @@ import { VsCodeIde } from "../VsCodeIde";
 
 import { ConfigYamlDocumentLinkProvider } from "./ConfigYamlDocumentLinkProvider";
 import { VsCodeMessenger } from "./VsCodeMessenger";
+import { registerVaultHandlers } from "../keypoollive/VaultCommandHandler";
 
 import { modelSupportsNextEdit } from "core/llm/autodetect";
 import { NEXT_EDIT_MODELS } from "core/llm/constants";
@@ -273,6 +274,15 @@ export class VsCodeExtension {
       ),
     );
     resolveWebviewProtocol(this.sidebar.webviewProtocol);
+
+    // FUFUNI VAULT: Register vault handlers
+    void this.webviewProtocolPromise.then((protocol) => {
+      try {
+        registerVaultHandlers(protocol, context);
+      } catch (error) {
+        console.warn("[KeypoolLive] Failed to register vault handlers:", error);
+      }
+    });
 
     const inProcessMessenger = new InProcessMessenger<
       ToCoreProtocol,
