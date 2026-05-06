@@ -65,8 +65,8 @@ async function buildLlmsFromVault(
       );
       const llm = await Promise.resolve(llmOrPromise);
       if (llm) {
-        (llm as any)._fufuniVault = true;
-        (llm as any)._fufuniProviderName = desc.provider;
+        (llm as any)._keypoolVault = true;
+        (llm as any)._keypoolProviderName = desc.provider;
         llms.push(llm);
       }
     } catch (error) {

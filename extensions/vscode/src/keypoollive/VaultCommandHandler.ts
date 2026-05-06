@@ -1,15 +1,25 @@
 // Handles KeypoolLive vault-related messages from webview
+import {
+  getSessionKeyInfo,
+  rotateSessionKey,
+} from "core/keypoollive/SessionKeyManager";
 import * as vscode from "vscode";
 import type { VsCodeWebviewProtocol } from "../webviewProtocol.js";
-import {
-  rotateSessionKey,
-  getSessionKeyInfo,
-} from "core/keypoollive/SessionKeyManager";
 
 type FufuniRotateKeyRequest = any;
 type FufuniRotateKeyResponse = any;
 type FufuniGetKeyInfoRequest = any;
 type FufuniGetKeyInfoResponse = any;
+
+function maskKeyForDisplay(apiKey: string): string {
+  if (!apiKey) {
+    return "";
+  }
+  if (apiKey.length <= 12) {
+    return apiKey;
+  }
+  return `${apiKey.slice(0, 6)}...${apiKey.slice(-6)}`;
+}
 
 /**
  * Registers all KeypoolLive vault-related message handlers
@@ -41,18 +51,23 @@ export function registerVaultHandlers(
         );
 
         if (newConfig) {
+          const keyHint = maskKeyForDisplay(newConfig.apiKey);
           const response: FufuniRotateKeyResponse = {
             success: true,
             newKeyInfo: {
               providerName: newConfig.providerName,
               keyOwner: newConfig.keyOwner,
-              keyHint: `...${newConfig.apiKey.slice(-6)}`,
+              keyHint,
               modelId: newConfig.modelId,
             },
           };
 
           void vscode.window.showInformationMessage(
-            `KeypoolLive: Switched to key ${newConfig.keyOwner}`,
+            [
+              "KeypoolLive: RotateKey",
+              `owner: ${newConfig.keyOwner}`,
+              `key: ${keyHint}`,
+            ].join("\n"),
           );
 
           return response;

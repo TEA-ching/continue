@@ -125,10 +125,10 @@ import { VaultKeyRotateButton } from "../keypoollive/VaultKeyRotateButton";
 
 // Dans le rendu du chat, ajouter le bouton après le sélecteur de modèle :
 {
-  currentModel?._fufuniVault && (
+  currentModel?._keypoolVault && (
     <VaultKeyRotateButton
       sessionId={sessionId}
-      providerName={(currentModel as any)._fufuniProviderName}
+      providerName={(currentModel as any)._keypoolProviderName}
       modelId={currentModel.model}
     />
   );

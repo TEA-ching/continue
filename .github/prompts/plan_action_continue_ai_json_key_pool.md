@@ -1093,8 +1093,8 @@ async function buildLlmsFromVault(
       );
       if (llm) {
         // Tag the LLM as being from KeypoolLive vault for identification
-        (llm as any)._fufuniVault = true;
-        (llm as any)._fufuniProviderName = desc.provider;
+        (llm as any)._keypoolVault = true;
+        (llm as any)._keypoolProviderName = desc.provider;
         llms.push(llm);
       }
     } catch (error) {
@@ -1376,11 +1376,11 @@ import { getSessionApiConfig, rotateSessionKey } from "./SessionKeyManager.js";
  */
 export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
   // Only wrap KeypoolLive vault models (marked in VaultConfigInjector.ts)
-  if (!(llm as any)._fufuniVault) {
+  if (!(llm as any)._keypoolVault) {
     return llm; // Return unwrapped for non-vault models
   }
 
-  const providerName: string = (llm as any)._fufuniProviderName ?? "";
+  const providerName: string = (llm as any)._keypoolProviderName ?? "";
 
   // Use ES6 Proxy to intercept property access transparently
   return new Proxy(llm, {

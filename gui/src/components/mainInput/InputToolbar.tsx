@@ -11,6 +11,7 @@ import {
 } from "core/llm/autodetect";
 import { memo, useContext, useRef } from "react";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
+import { VaultKeyRotateButton } from "../../keypoollive/VaultKeyRotateButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectUseActiveFile } from "../../redux/selectors";
 import { selectSelectedChatModel } from "../../redux/slices/configSlice";
@@ -25,7 +26,6 @@ import { Button } from "../ui";
 import { useFontSize } from "../ui/font";
 import ContextStatus from "./ContextStatus";
 import HoverItem from "./InputToolbar/HoverItem";
-import { VaultKeyRotateButton } from "../../keypoollive/VaultKeyRotateButton";
 
 export interface ToolbarOptions {
   hideUseCodebase?: boolean;
@@ -47,6 +47,21 @@ interface InputToolbarProps {
   isMainInput?: boolean;
 }
 
+function getVaultProviderNameFromModel(model: any): string | undefined {
+  if (!model?.title?.startsWith("[KeypoolLive]")) {
+    return undefined;
+  }
+
+  // Prefer serialized provider when available.
+  if (typeof model.provider === "string" && model.provider.length > 0) {
+    return model.provider;
+  }
+
+  // Fallback: parse "[KeypoolLive] provider/model (...)" title format.
+  const match = /^\[KeypoolLive\]\s+([^/]+)\//.exec(model.title);
+  return match?.[1];
+}
+
 function InputToolbar(props: InputToolbarProps) {
   const dispatch = useAppDispatch();
   const ideMessenger = useContext(IdeMessengerContext);
@@ -58,9 +73,12 @@ function InputToolbar(props: InputToolbarProps) {
   const hasReasoningEnabled = useAppSelector(
     (store) => store.session.hasReasoningEnabled,
   );
+  const currentSessionId = useAppSelector((state) => state.session.id);
   const lastSessionId = useAppSelector((state) => state.session.lastSessionId);
   const isEnterDisabled =
     props.disabled || (isInEdit && codeToEdit.length === 0);
+  const vaultProviderName = getVaultProviderNameFromModel(defaultModel);
+  const rotateSessionId = currentSessionId || lastSessionId;
 
   const supportsImages =
     defaultModel &&
@@ -99,15 +117,13 @@ function InputToolbar(props: InputToolbarProps) {
             </HoverItem>
           </ToolTip>
           {/* FUFUNI VAULT: Add key rotation button for vault models */}
-          {lastSessionId &&
-            defaultModel &&
-            (defaultModel as any)._fufuniVault && (
-              <VaultKeyRotateButton
-                sessionId={lastSessionId}
-                providerName={(defaultModel as any)._fufuniProviderName}
-                modelId={defaultModel.model}
-              />
-            )}
+          {rotateSessionId && vaultProviderName && (
+            <VaultKeyRotateButton
+              sessionId={rotateSessionId}
+              providerName={vaultProviderName}
+              modelId={defaultModel?.model}
+            />
+          )}
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">
             {props.toolbarOptions?.hideImageUpload ||
               (supportsImages && (

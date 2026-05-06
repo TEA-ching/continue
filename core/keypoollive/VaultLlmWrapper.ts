@@ -35,11 +35,11 @@ import {
  */
 export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
   // Only wrap KeypoolLive vault models
-  if (!(llm as any)._fufuniVault) {
+  if (!(llm as any)._keypoolVault) {
     return llm;
   }
 
-  const providerName: string = (llm as any)._fufuniProviderName ?? "";
+  const providerName: string = (llm as any)._keypoolProviderName ?? "";
 
   return new Proxy(llm, {
     get(target, prop, receiver) {
