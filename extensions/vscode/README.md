@@ -59,6 +59,254 @@ All fields can be overridden with environment variables (env takes precedence ov
 | `gatewaySecret` | `KEYPOOL_LIVE_GATEWAY_SECRET`               |
 | `gatewayId`     | `KEYPOOL_LIVE_GATEWAY_ID`                   |
 
+#### Sample ai.json vault format
+
+```json
+{
+  "version": 1,
+  "providers": {
+    "anthropic": {
+      "protocol": "anthropic",
+      "gatewayEndpoint": "https://gateway.ai.cloudflare.com/v1/cloudflare_account_id/default/compat",
+      "gatewayModelPrefix": "anthropic",
+      "endpoint": "https://api.anthropic.com/v1",
+      "keys": [
+        {
+          "key": "sk-ant-api03-EXAMPLE_KEY_1234567890",
+          "owner": "john.doe@example.com",
+          "type": "free"
+        },
+        {
+          "key": "sk-ant-api03-EXAMPLE_KEY_0987654321",
+          "owner": "jane.smith@example.com",
+          "type": "paid"
+        }
+      ],
+      "models": [
+        {
+          "id": "claude-haiku-4-5-20251001",
+          "usage": "chat",
+          "contextWindow": 200000,
+          "maxOutputTokens": 64000,
+          "tpmLimit": null,
+          "priority": 200,
+          "tags": ["fast", "cheap", "code"]
+        },
+        {
+          "id": "claude-sonnet-4-6",
+          "usage": "chat",
+          "contextWindow": 1000000,
+          "maxOutputTokens": 64000,
+          "tpmLimit": null,
+          "priority": 210,
+          "tags": ["code", "large", "reasoning"]
+        },
+        {
+          "id": "claude-opus-4-6",
+          "usage": "chat",
+          "contextWindow": 1000000,
+          "maxOutputTokens": 128000,
+          "tpmLimit": null,
+          "priority": 220,
+          "tags": ["powerful", "large", "reasoning"]
+        }
+      ]
+    },
+    "gemini": {
+      "protocol": "gemini",
+      "gatewayEndpoint": "https://gateway.ai.cloudflare.com/v1/cloudflare_account_id/default/compat",
+      "gatewayModelPrefix": "google-ai-studio",
+      "endpoint": "https://generativelanguage.googleapis.com/v1beta",
+      "keys": [
+        {
+          "key": "AIzaSyEXAMPLE_KEY_1234567890",
+          "owner": "demo.user@example.com|projects/1234567890",
+          "type": "free"
+        },
+        {
+          "key": "AIzaSyEXAMPLE_KEY_0987654321",
+          "owner": "test.user@example.com|projects/0987654321",
+          "type": "free"
+        }
+      ],
+      "models": [
+        {
+          "id": "gemini-embedding-2-preview",
+          "contextWindow": 8192,
+          "maxOutputTokens": 0,
+          "tpmLimit": null,
+          "priority": 1,
+          "usage": "embedding",
+          "defaultDimensions": 256,
+          "tags": ["embedding"]
+        },
+        {
+          "id": "gemini-3-flash-preview",
+          "contextWindow": 1048576,
+          "maxOutputTokens": 65536,
+          "tpmLimit": null,
+          "priority": 104,
+          "usage": "chat",
+          "tags": ["flash", "powerful", "large"]
+        }
+      ]
+    },
+    "groq": {
+      "protocol": "openai",
+      "gatewayEndpoint": "https://gateway.ai.cloudflare.com/v1/cloudflare_account_id/default/compat",
+      "gatewayModelPrefix": "groq",
+      "endpoint": "https://api.groq.com/openai/v1",
+      "keys": [
+        {
+          "key": "gsk_EXAMPLE_KEY_1234567890",
+          "owner": "github|demo_user",
+          "type": "free"
+        },
+        {
+          "key": "gsk_EXAMPLE_KEY_0987654321",
+          "owner": "demo.user@example.com",
+          "type": "free"
+        }
+      ],
+      "models": [
+        {
+          "id": "llama-3.3-70b-versatile",
+          "usage": "chat",
+          "contextWindow": 131072,
+          "maxOutputTokens": 32768,
+          "tpmLimit": 12000,
+          "priority": 1,
+          "tags": ["fast", "code", "large"]
+        },
+        {
+          "id": "llama-3.1-8b-instant",
+          "usage": "chat",
+          "contextWindow": 131072,
+          "maxOutputTokens": 8192,
+          "tpmLimit": 6000,
+          "priority": 20,
+          "tags": ["fast", "cheap"]
+        }
+      ]
+    },
+    "mistral": {
+      "protocol": "openai",
+      "gatewayEndpoint": "https://gateway.ai.cloudflare.com/v1/cloudflare_account_id/default/compat",
+      "gatewayModelPrefix": "mistral",
+      "endpoint": "https://api.mistral.ai/v1",
+      "keys": [
+        {
+          "key": "EXAMPLE_KEY_1234567890",
+          "owner": "demo.user@example.com|+1234567890",
+          "type": "free"
+        },
+        {
+          "key": "EXAMPLE_KEY_0987654321",
+          "owner": "test.user@example.com|+0987654321",
+          "type": "free"
+        }
+      ],
+      "models": [
+        {
+          "id": "codestral-latest",
+          "usage": "chat",
+          "contextWindow": 256000,
+          "maxOutputTokens": 256000,
+          "tpmLimit": 500000,
+          "priority": 60,
+          "tags": ["codestral", "small", "code"]
+        },
+        {
+          "id": "mistral-medium-latest",
+          "usage": "chat",
+          "contextWindow": 128000,
+          "maxOutputTokens": 128000,
+          "tpmLimit": 500000,
+          "priority": 50,
+          "tags": ["mistral", "medium", "fast"]
+        }
+      ]
+    },
+    "openrouter": {
+      "protocol": "openai",
+      "gatewayEndpoint": "https://gateway.ai.cloudflare.com/v1/cloudflare_account_id/default/compat",
+      "gatewayModelPrefix": "openrouter",
+      "endpoint": "https://openrouter.ai/api/v1",
+      "keys": [
+        {
+          "key": "sk-or-v1-EXAMPLE_KEY_1234567890",
+          "owner": "demo.user@example.com",
+          "type": "free"
+        },
+        {
+          "key": "sk-or-v1-EXAMPLE_KEY_0987654321",
+          "owner": "test.user@example.com",
+          "type": "free"
+        }
+      ],
+      "models": [
+        {
+          "id": "qwen/qwen3.5-flash-02-23",
+          "usage": "chat",
+          "contextWindow": 131072,
+          "maxOutputTokens": 65536,
+          "tpmLimit": null,
+          "priority": 150,
+          "tags": ["openrouter", "qwen", "chat"]
+        },
+        {
+          "id": "qwen/qwen3-coder:free",
+          "usage": "chat",
+          "contextWindow": 262000,
+          "maxOutputTokens": 262000,
+          "tpmLimit": null,
+          "priority": 80,
+          "tags": ["openrouter", "qwen", "chat"]
+        }
+      ]
+    },
+    "sambanova": {
+      "protocol": "openai",
+      "gatewayEndpoint": "https://gateway.ai.cloudflare.com/v1/cloudflare_account_id/default/compat",
+      "gatewayModelPrefix": "custom-sambanova",
+      "endpoint": "https://api.sambanova.com/v1",
+      "keys": [
+        {
+          "key": "EXAMPLE_KEY_1234567890",
+          "owner": "demo.user@example.com",
+          "type": "free"
+        },
+        {
+          "key": "EXAMPLE_KEY_0987654321",
+          "owner": "test.user@example.com",
+          "type": "free"
+        }
+      ],
+      "models": [
+        {
+          "id": "DeepSeek-V3.1",
+          "usage": "chat",
+          "contextWindow": 131072,
+          "maxOutputTokens": 65536,
+          "tpmLimit": null,
+          "priority": 100,
+          "tags": ["sambanova", "chat"]
+        },
+        {
+          "id": "Meta-Llama-3.3-70B-Instruct",
+          "usage": "chat",
+          "contextWindow": 131072,
+          "maxOutputTokens": 65536,
+          "tpmLimit": null,
+          "priority": 100,
+          "tags": ["sambanova", "chat"]
+        }
+      ]
+    }
+  }
+}
+```
+
 ### Direct mode vs Gateway mode
 
 **Direct mode** (`useGateway: false` or gateway credentials absent): each model connects directly to the provider's API endpoint using a provider API key selected round-robin from the vault.
