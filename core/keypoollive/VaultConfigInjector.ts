@@ -6,7 +6,6 @@ import { configureSessionKeyManager } from "./SessionKeyManager.js";
 import { AiVaultConfig } from "./types.js";
 
 let vaultUrl: string | null = null;
-let cachedVaultLlms: ILLM[] | null = null;
 
 /**
  * Sets the vault URL
@@ -44,10 +43,6 @@ async function buildLlmsFromVault(
       if (llm) {
         (llm as any)._fufuniVault = true;
         (llm as any)._fufuniProviderName = desc.provider;
-        // Ensure required properties are set for model selection
-        if (!llm.title) {
-          (llm as any).title = desc.title;
-        }
         llms.push(llm);
       }
     } catch (error) {
@@ -91,48 +86,32 @@ export async function injectVaultModels(
     return config;
   }
 
-  // Use cached models if available to avoid recreating them on every config reload
-  let vaultLlms = cachedVaultLlms;
-  if (!vaultLlms) {
-    vaultLlms = await buildLlmsFromVault(vault, ideSettings, llmLogger);
-    cachedVaultLlms = vaultLlms;
-    console.log(
-      `[KeypoolLive] Created and cached ${vaultLlms.length} vault models`,
-    );
-    vaultLlms.forEach((m, i) => {
-      const model = m as any;
-      console.log(
-        `[KeypoolLive] Model ${i}: title="${model.title}", provider="${model.providerName}", apiKey=${model.apiKey ? "SET" : "EMPTY"}`,
-      );
-    });
-  } else {
-    console.log(`[KeypoolLive] Using cached ${vaultLlms.length} vault models`);
-  }
+  const vaultLlms = await buildLlmsFromVault(vault, ideSettings, llmLogger);
 
   if (vaultLlms.length === 0) {
-    console.log("[KeypoolLive] No vault models available, skipping injection");
+    console.log("[KeypoolLive] No vault models created, skipping injection");
     return config;
   }
 
-  // Check if vault models are already in the config to avoid duplication
-  const existingModels = config.models ?? [];
-  const hasVaultModels = existingModels.some(
-    (m) => (m as any)._fufuniVault === true,
-  );
-
-  if (hasVaultModels) {
-    console.log(
-      "[KeypoolLive] Vault models already in config, skipping injection",
-    );
-    return config;
-  }
-
-  // Add vault models to the main models array
   const augmentedConfig = { ...config } as any;
-  augmentedConfig.models = [...(augmentedConfig.models ?? []), ...vaultLlms];
+  // Add vault models to chat/edit/apply roles.
+  // Apply can use chat-capable models as generation backends.
+  augmentedConfig.modelsByRole = augmentedConfig.modelsByRole || {};
+  augmentedConfig.modelsByRole.chat = [
+    ...(augmentedConfig.modelsByRole.chat ?? []),
+    ...vaultLlms,
+  ];
+  augmentedConfig.modelsByRole.edit = [
+    ...(augmentedConfig.modelsByRole.edit ?? []),
+    ...vaultLlms,
+  ];
+  augmentedConfig.modelsByRole.apply = [
+    ...(augmentedConfig.modelsByRole.apply ?? []),
+    ...vaultLlms,
+  ];
 
   console.log(
-    `[KeypoolLive] Injected ${vaultLlms.length} vault models into config.models`,
+    `[KeypoolLive] Injected ${vaultLlms.length} vault models into augmentedConfig`,
   );
   return augmentedConfig as ContinueConfig;
 }

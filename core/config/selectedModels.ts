@@ -19,6 +19,7 @@ export function rectifySelectedModelsFromGlobalContext(
     currentSelectedModels?.[profileId] ?? {};
 
   let fellBack = false;
+  const deferredKeypoolRoles = new Set<ModelRole>();
 
   // summarize not implemented yet
   const roles: ModelRole[] = [
@@ -33,6 +34,8 @@ export function rectifySelectedModelsFromGlobalContext(
   for (const role of roles) {
     let newModel: ILLM | null = null;
     const currentSelection = currentForProfile[role] ?? null;
+    const isKeypoolSelection = currentSelection?.startsWith("[KeypoolLive]");
+    const existingSelected = continueConfig.selectedModelByRole[role] ?? null;
 
     if (currentSelection) {
       const match = continueConfig.modelsByRole[role].find(
@@ -40,6 +43,13 @@ export function rectifySelectedModelsFromGlobalContext(
       );
       if (match) {
         newModel = match;
+      } else if (isKeypoolSelection) {
+        // KeypoolLive models are injected later in the load pipeline.
+        // Avoid destructive fallback + persistence rewrite before injection.
+        deferredKeypoolRoles.add(role);
+        newModel = existingSelected;
+        configCopy.selectedModelByRole[role] = newModel;
+        continue;
       }
     }
 
@@ -70,7 +80,9 @@ export function rectifySelectedModelsFromGlobalContext(
       [profileId]: Object.fromEntries(
         Object.entries(configCopy.selectedModelByRole).map(([key, value]) => [
           key,
-          value?.title ?? null,
+          deferredKeypoolRoles.has(key as ModelRole)
+            ? (currentForProfile[key as ModelRole] ?? value?.title ?? null)
+            : (value?.title ?? null),
         ]),
       ),
     });

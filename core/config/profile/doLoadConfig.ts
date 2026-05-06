@@ -465,6 +465,10 @@ export default async function doLoadConfig(options: {
     if (vaultUrl) {
       setVaultUrl(vaultUrl);
       newConfig = await injectVaultModels(newConfig, ideSettings, llmLogger);
+
+      // Re-run model selection rectification after dynamic model injection,
+      // otherwise persisted selections for injected models fall back.
+      newConfig = rectifySelectedModelsFromGlobalContext(newConfig, profileId);
     }
   } catch (error) {
     console.warn("[KeypoolLive] Failed to inject vault models:", error);
