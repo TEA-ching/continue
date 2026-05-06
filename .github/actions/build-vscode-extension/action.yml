@@ -83,7 +83,7 @@ runs:
       shell: bash
       run: |
         cd extensions/vscode
-        npm ci
+        npm i
       env:
         # https://github.com/microsoft/vscode-ripgrep/issues/9#issuecomment-643965333
         GITHUB_TOKEN: ${{ inputs.github-token }}
@@ -92,13 +92,13 @@ runs:
       shell: bash
       run: |
         cd gui
-        npm ci
+        npm i
 
     - name: Install core dependencies
       shell: bash
       run: |
         cd core
-        npm ci
+        npm i
         npm i vectordb
 
     - name: Build GUI
