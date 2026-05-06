@@ -61,5 +61,8 @@
   },
   "terminal.integrated.env.linux": {
     "PYTHON": "/usr/bin/python3.11"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
   }
 }

@@ -6,11 +6,31 @@ import {
 import * as vscode from "vscode";
 import type { VsCodeWebviewProtocol } from "../webviewProtocol.js";
 
+/**
+ * Type representing a request to rotate a session key
+ */
 type FufuniRotateKeyRequest = any;
+
+/**
+ * Type representing a response from a key rotation request
+ */
 type FufuniRotateKeyResponse = any;
+
+/**
+ * Type representing a request to get key information
+ */
 type FufuniGetKeyInfoRequest = any;
+
+/**
+ * Type representing a response containing key information
+ */
 type FufuniGetKeyInfoResponse = any;
 
+/**
+ * Masks an API key for display purposes by showing only the first and last 6 characters
+ * @param apiKey - The API key to be masked
+ * @returns The masked API key or an empty string if the input is empty
+ */
 function maskKeyForDisplay(apiKey: string): string {
   if (!apiKey) {
     return "";
@@ -23,6 +43,8 @@ function maskKeyForDisplay(apiKey: string): string {
 
 /**
  * Registers all KeypoolLive vault-related message handlers
+ * @param webviewProtocol - The webview protocol instance for communication
+ * @param context - The extension context provided by VS Code
  */
 export function registerVaultHandlers(
   webviewProtocol: VsCodeWebviewProtocol,
