@@ -181,4 +181,6 @@ export interface KeypoolLiveConfig {
   gatewaySecret?: string;
   /** Cloudflare AI Gateway ID — overridden by KEYPOOL_LIVE_GATEWAY_ID */
   gatewayId?: string;
+  /** Enable Cloudflare AI Gateway cache — overridden by KEYPOOL_LIVE_GATEWAY_CACHE_SKIP */
+  gatewayCacheSkip?: boolean;
 }

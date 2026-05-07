@@ -243,6 +243,9 @@ export function buildModelDescriptions(
           requestOptions: {
             headers: {
               "cf-aig-authorization": `Bearer ${kplConfig!.gatewaySecret}`,
+              "cf-aig-skip-cache": kplConfig!.gatewayCacheSkip
+                ? "false"
+                : "true",
             },
           },
           vaultProviderName: providerName,

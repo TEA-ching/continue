@@ -484,6 +484,10 @@ export default async function doLoadConfig(options: {
       gatewaySecret:
         process.env.KEYPOOL_LIVE_GATEWAY_SECRET || kplFromYaml.gatewaySecret,
       gatewayId: process.env.KEYPOOL_LIVE_GATEWAY_ID || kplFromYaml.gatewayId,
+      gatewayCacheSkip:
+        process.env.KEYPOOL_LIVE_GATEWAY_CACHE_SKIP !== undefined
+          ? process.env.KEYPOOL_LIVE_GATEWAY_CACHE_SKIP === "true"
+          : kplFromYaml.gatewayCacheSkip,
     };
 
     if (kplConfig.vaultUrl) {

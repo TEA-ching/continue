@@ -51,13 +51,14 @@ keypoollive:
 
 All fields can be overridden with environment variables (env takes precedence over YAML):
 
-| YAML field      | Environment variable                        |
-| --------------- | ------------------------------------------- |
-| `vaultUrl`      | `KEYPOOL_LIVE_VAULT_URL`                    |
-| `secret`        | `KEYPOOL_LIVE_SECRET`                       |
-| `useGateway`    | `KEYPOOL_LIVE_USE_GATEWAY` (`true`/`false`) |
-| `gatewaySecret` | `KEYPOOL_LIVE_GATEWAY_SECRET`               |
-| `gatewayId`     | `KEYPOOL_LIVE_GATEWAY_ID`                   |
+| YAML field         | Environment variable                               |
+| ------------------ | -------------------------------------------------- |
+| `vaultUrl`         | `KEYPOOL_LIVE_VAULT_URL`                           |
+| `secret`           | `KEYPOOL_LIVE_SECRET`                              |
+| `useGateway`       | `KEYPOOL_LIVE_USE_GATEWAY` (`true`/`false`)        |
+| `gatewaySecret`    | `KEYPOOL_LIVE_GATEWAY_SECRET`                      |
+| `gatewayId`        | `KEYPOOL_LIVE_GATEWAY_ID`                          |
+| `gatewayCacheSkip` | `KEYPOOL_LIVE_GATEWAY_CACHE_SKIP` (`true`/`false`) |
 
 #### Sample ai.json vault format
 
