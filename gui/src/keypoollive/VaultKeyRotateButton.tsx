@@ -29,12 +29,16 @@ interface VaultKeyRotateButtonProps {
   sessionId: string;
   providerName?: string;
   modelId?: string;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export function VaultKeyRotateButton({
   sessionId,
   providerName,
   modelId,
+  disabled = false,
+  disabledReason,
 }: VaultKeyRotateButtonProps): React.ReactElement | null {
   const ideMessenger = useContext(IdeMessengerContext);
   const [status, setStatus] = useState<
@@ -43,12 +47,18 @@ export function VaultKeyRotateButton({
   const [statusMessage, setStatusMessage] = useState<string>("");
 
   const handleRotateKey = useCallback(async () => {
-    if (!providerName) return;
+    if (!providerName || disabled) return;
 
     setStatus("loading");
     setStatusMessage("Rotating key...");
 
     try {
+      console.log("[KeypoolLive] rotateKey request", {
+        sessionId,
+        providerName,
+        modelId,
+      });
+
       const response = await ideMessenger.request(
         "keypoollive/rotateKey" as any,
         {
@@ -57,6 +67,8 @@ export function VaultKeyRotateButton({
           modelId,
         },
       );
+
+      console.log("[KeypoolLive] rotateKey response", response);
 
       const payload =
         response.status === "success" ? (response.content as any) : null;
@@ -93,7 +105,7 @@ export function VaultKeyRotateButton({
         setStatusMessage("");
       }, 5000);
     }
-  }, [ideMessenger, sessionId, providerName, modelId]);
+  }, [ideMessenger, sessionId, providerName, modelId, disabled]);
 
   if (!providerName) {
     return null;
@@ -114,23 +126,24 @@ export function VaultKeyRotateButton({
         gap: "4px",
         fontSize: "11px",
         opacity: status === "loading" ? 0.7 : 1,
-        cursor: status === "loading" ? "not-allowed" : "pointer",
+        cursor: status === "loading" || disabled ? "not-allowed" : "pointer",
       }}
       title={
         status === "idle"
-          ? `KeypoolLive: Change API key for ${providerName}`
+          ? (disabledReason ??
+            `KeypoolLive: Change API key for ${providerName}`)
           : statusMessage
       }
     >
       <button
         onClick={handleRotateKey}
-        disabled={status === "loading"}
+        disabled={status === "loading" || disabled}
         style={{
           background: "none",
           border: "1px solid var(--vscode-button-border, #555)",
           borderRadius: "3px",
           padding: "2px 6px",
-          cursor: status === "loading" ? "not-allowed" : "pointer",
+          cursor: status === "loading" || disabled ? "not-allowed" : "pointer",
           color: statusColor,
           fontSize: "11px",
           display: "flex",

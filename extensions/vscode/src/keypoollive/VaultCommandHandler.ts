@@ -6,6 +6,8 @@ import {
 import * as vscode from "vscode";
 import type { VsCodeWebviewProtocol } from "../webviewProtocol.js";
 
+const KEYPOOLLIVE_GLOBAL_SESSION_ID = "global";
+
 /**
  * Type representing a request to rotate a session key
  */
@@ -55,6 +57,7 @@ export function registerVaultHandlers(
     "keypoollive/rotateKey" as any,
     async (msg: { data: FufuniRotateKeyRequest }) => {
       const { sessionId, providerName, modelId } = msg.data;
+      const rotationSessionId = sessionId || KEYPOOLLIVE_GLOBAL_SESSION_ID;
 
       if (!providerName) {
         const response: FufuniRotateKeyResponse = {
@@ -66,7 +69,7 @@ export function registerVaultHandlers(
 
       try {
         const newConfig = await rotateSessionKey(
-          sessionId,
+          rotationSessionId,
           providerName,
           modelId,
           "user_request",

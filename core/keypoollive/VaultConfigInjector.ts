@@ -26,12 +26,114 @@
 import { ContinueConfig, ILLM, ILLMLogger } from "../index.js";
 import { loadAiVault } from "./AiVault.js";
 import { buildModelDescriptions } from "./KeyPool.js";
-import { configureSessionKeyManager } from "./SessionKeyManager.js";
+import {
+  configureSessionKeyManager,
+  getSessionApiConfig,
+} from "./SessionKeyManager.js";
 import { AiVaultConfig, KeypoolLiveConfig } from "./types.js";
 
 let vaultUrl: string | null = null;
 let cachedVaultLlms: ILLM[] | null = null;
 let currentKplConfig: KeypoolLiveConfig | null = null;
+const KEYPOOLLIVE_GLOBAL_SESSION_ID = "global";
+
+function getVaultRequestUrl(
+  apiBase: string | undefined,
+  provider: string,
+  model: string,
+  operation: "chat" | "complete" | "fim",
+): string {
+  const base = apiBase?.trim() || "(unknown apiBase)";
+  if (base === "(unknown apiBase)") {
+    return base;
+  }
+
+  let path: string;
+  if (operation === "fim") {
+    path = "fim/completions";
+  } else if (operation === "complete") {
+    path = "completions";
+  } else if (provider === "anthropic") {
+    path = "messages";
+  } else if (provider === "gemini") {
+    path = `models/${encodeURIComponent(model)}:streamGenerateContent`;
+  } else {
+    path = "chat/completions";
+  }
+
+  try {
+    return new URL(path, base.endsWith("/") ? base : `${base}/`).toString();
+  } catch {
+    return `${base.replace(/\/$/, "")}/${path}`;
+  }
+}
+
+function getRequestHeaders(llm: ILLM, apiKey: string): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `Bearer ${apiKey}`,
+    "x-api-key": apiKey,
+    ...((llm as any).requestOptions?.headers ?? {}),
+  };
+}
+
+async function prepareVaultRequest(
+  llm: ILLM,
+  providerName: string,
+  modelId: string,
+  operation: "chat" | "complete" | "fim",
+  options: any,
+  input: unknown,
+): Promise<any> {
+  const config = await getSessionApiConfig(
+    KEYPOOLLIVE_GLOBAL_SESSION_ID,
+    providerName,
+    modelId,
+  );
+  const activeApiKey = config?.apiKey ?? (llm as any).apiKey ?? "";
+
+  if (config) {
+    (llm as any).apiKey = config.apiKey;
+
+    // OpenAI-compatible adapters capture apiKey in their constructor, so rebuild
+    // after rotation to make the next request use the active vault key.
+    if (typeof (llm as any).createOpenAiAdapter === "function") {
+      (llm as any).openaiAdapter = (llm as any).createOpenAiAdapter();
+    }
+  }
+
+  const url = getVaultRequestUrl(
+    (llm as any).apiBase,
+    (llm as any).providerName,
+    (llm as any).model,
+    operation,
+  );
+  const routingMode =
+    (llm as any).requestOptions?.headers?.["cf-aig-authorization"] !== undefined
+      ? "cloudflare-ai-gateway"
+      : "direct";
+  const headers = getRequestHeaders(llm, activeApiKey);
+  const keypoolLiveRequest = {
+    method: "POST",
+    url,
+    routingMode,
+    providerName,
+    modelId,
+    continueProvider: (llm as any).providerName,
+    continueModel: (llm as any).model,
+    apiKey: activeApiKey,
+    headers,
+    input,
+  };
+
+  console.log("[KeypoolLive] request", keypoolLiveRequest);
+
+  return {
+    ...(options ?? {}),
+    keypoolLiveRequest,
+  };
+}
 
 /**
  * Sets the vault URL and optional KeypoolLive gateway config.
@@ -79,6 +181,85 @@ async function buildLlmsFromVault(
         (llm as any)._keypoolVault = true;
         (llm as any)._keypoolProviderName = desc.vaultProviderName;
         (llm as any)._keypoolModelId = desc.vaultModelId;
+
+        const providerName = desc.vaultProviderName;
+        const modelId = desc.vaultModelId;
+        const originalStreamChat = llm.streamChat.bind(llm);
+        const originalStreamComplete = llm.streamComplete.bind(llm);
+        const originalComplete = llm.complete.bind(llm);
+        const originalStreamFim = llm.streamFim.bind(llm);
+
+        (llm as any).streamChat = async function* (
+          messages: any,
+          signal: AbortSignal,
+          options?: any,
+          messageOptions?: any,
+        ) {
+          const enrichedOptions = await prepareVaultRequest(
+            llm,
+            providerName,
+            modelId,
+            "chat",
+            options,
+            { messages },
+          );
+          yield* originalStreamChat(
+            messages,
+            signal,
+            enrichedOptions,
+            messageOptions,
+          );
+        };
+
+        (llm as any).streamComplete = async function* (
+          prompt: string,
+          signal: AbortSignal,
+          options?: any,
+        ) {
+          const enrichedOptions = await prepareVaultRequest(
+            llm,
+            providerName,
+            modelId,
+            "complete",
+            options,
+            { prompt },
+          );
+          yield* originalStreamComplete(prompt, signal, enrichedOptions);
+        };
+
+        (llm as any).complete = async function (
+          prompt: string,
+          signal: AbortSignal,
+          options?: any,
+        ) {
+          const enrichedOptions = await prepareVaultRequest(
+            llm,
+            providerName,
+            modelId,
+            "complete",
+            options,
+            { prompt },
+          );
+          return originalComplete(prompt, signal, enrichedOptions);
+        };
+
+        (llm as any).streamFim = async function* (
+          prefix: string,
+          suffix: string,
+          signal: AbortSignal,
+          options?: any,
+        ) {
+          const enrichedOptions = await prepareVaultRequest(
+            llm,
+            providerName,
+            modelId,
+            "fim",
+            options,
+            { prefix, suffix },
+          );
+          yield* originalStreamFim(prefix, suffix, signal, enrichedOptions);
+        };
+
         llms.push(llm);
       }
     } catch (error) {

@@ -9,7 +9,7 @@ import {
   modelSupportsImages,
   modelSupportsReasoning,
 } from "core/llm/autodetect";
-import { memo, useContext, useRef } from "react";
+import { memo, useContext, useEffect, useRef } from "react";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
 import { VaultKeyRotateButton } from "../../keypoollive/VaultKeyRotateButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -47,6 +47,8 @@ interface InputToolbarProps {
   isMainInput?: boolean;
 }
 
+const KEYPOOLLIVE_GLOBAL_SESSION_ID = "global";
+
 function getVaultInfoFromModel(
   model: any,
 ): { providerName: string; modelId: string } | undefined {
@@ -72,11 +74,17 @@ function InputToolbar(props: InputToolbarProps) {
     (store) => store.session.hasReasoningEnabled,
   );
   const currentSessionId = useAppSelector((state) => state.session.id);
-  const lastSessionId = useAppSelector((state) => state.session.lastSessionId);
   const isEnterDisabled =
     props.disabled || (isInEdit && codeToEdit.length === 0);
   const vaultInfo = getVaultInfoFromModel(defaultModel);
-  const rotateSessionId = currentSessionId || lastSessionId;
+
+  useEffect(() => {
+    if (vaultInfo && !currentSessionId) {
+      console.warn(
+        "[KeypoolLive] Rotation disabled because no active chat session id is available",
+      );
+    }
+  }, [vaultInfo, currentSessionId]);
 
   const supportsImages =
     defaultModel &&
@@ -115,11 +123,13 @@ function InputToolbar(props: InputToolbarProps) {
             </HoverItem>
           </ToolTip>
           {/* KEYPOOLLIVE VAULT: Add key rotation button for vault models */}
-          {rotateSessionId && vaultInfo && (
+          {vaultInfo && (
             <VaultKeyRotateButton
-              sessionId={rotateSessionId}
+              sessionId={KEYPOOLLIVE_GLOBAL_SESSION_ID}
               providerName={vaultInfo.providerName}
               modelId={vaultInfo.modelId}
+              disabled={!currentSessionId}
+              disabledReason="KeypoolLive: rotation requires an active chat session"
             />
           )}
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">

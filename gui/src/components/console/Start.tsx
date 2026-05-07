@@ -13,6 +13,39 @@ export interface StartProps {
     | LLMInteractionStartFim;
 }
 
+function splitOptionsAndRequest(options: any) {
+  const { keypoolLiveRequest, requestBody, ...displayOptions } = options ?? {};
+  const request = keypoolLiveRequest
+    ? {
+        ...keypoolLiveRequest,
+        body: requestBody ?? keypoolLiveRequest.input,
+      }
+    : requestBody
+      ? { body: requestBody }
+      : undefined;
+
+  return { displayOptions, request };
+}
+
+function OptionsAndRequest({ options }: { options: any }) {
+  const { displayOptions, request } = splitOptionsAndRequest(options);
+
+  return (
+    <>
+      <Expander label="Options">
+        <pre className="m-0">
+          {JSON.stringify(displayOptions, undefined, 2)}
+        </pre>
+      </Expander>
+      {request && (
+        <Expander label="Request">
+          <pre className="m-0">{JSON.stringify(request, undefined, 2)}</pre>
+        </Expander>
+      )}
+    </>
+  );
+}
+
 export default function Start({ item }: StartProps) {
   return (
     <div className="border-0 border-b-2 border-solid border-[color:var(--vscode-panel-border)] p-1">
@@ -28,11 +61,7 @@ export default function Start({ item }: StartProps) {
                     ))}
                   </div>
                 </Expander>
-                <Expander label="Options">
-                  <pre className="m-0">
-                    {JSON.stringify(item.options, undefined, 2)}
-                  </pre>
-                </Expander>
+                <OptionsAndRequest options={item.options} />
               </>
             );
             break;
@@ -42,11 +71,7 @@ export default function Start({ item }: StartProps) {
                 <Expander label="Prompt">
                   <pre className="m-0">{item.prompt}</pre>
                 </Expander>
-                <Expander label="Options">
-                  <pre className="m-0">
-                    {JSON.stringify(item.options, undefined, 2)}
-                  </pre>
-                </Expander>
+                <OptionsAndRequest options={item.options} />
               </>
             );
             break;
@@ -59,11 +84,7 @@ export default function Start({ item }: StartProps) {
                 <Expander label="Suffix">
                   <pre className="m-0">{item.suffix}</pre>
                 </Expander>
-                <Expander label="Options">
-                  <pre className="m-0">
-                    {JSON.stringify(item.options, undefined, 2)}
-                  </pre>
-                </Expander>
+                <OptionsAndRequest options={item.options} />
               </>
             );
         }

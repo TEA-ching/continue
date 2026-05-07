@@ -290,8 +290,9 @@ function mapToContinueProvider(
     groq: "groq",
     mistral: "mistral",
     openrouter: "openrouter",
+    openai: "openai",
   };
-  return mapping[providerName] ?? null;
+  return mapping[providerName] ?? (protocol === "openai" ? "openai" : null);
 }
 
 /**
