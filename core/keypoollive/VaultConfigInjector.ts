@@ -37,6 +37,10 @@ let cachedVaultLlms: ILLM[] | null = null;
 let currentKplConfig: KeypoolLiveConfig | null = null;
 const KEYPOOLLIVE_GLOBAL_SESSION_ID = "global";
 
+/**
+ * Constructs the full request URL based on the provider, model, and operation type.
+ * Handles protocol-specific paths (Anthropic, Gemini, OpenAI-compatible).
+ */
 function getVaultRequestUrl(
   apiBase: string | undefined,
   provider: string,
@@ -58,16 +62,18 @@ function getVaultRequestUrl(
   } else if (provider === "gemini") {
     path = `models/${encodeURIComponent(model)}:streamGenerateContent`;
   } else {
+    // Default to OpenAI-compatible chat completions
     path = "chat/completions";
   }
-
   try {
     return new URL(path, base.endsWith("/") ? base : `${base}/`).toString();
   } catch {
     return `${base.replace(/\/$/, "")}/${path}`;
   }
 }
-
+/**
+ * Returns standard headers for LLM API requests, including the bearer token.
+ */
 function getRequestHeaders(llm: ILLM, apiKey: string): Record<string, string> {
   return {
     "Content-Type": "application/json",
@@ -78,6 +84,10 @@ function getRequestHeaders(llm: ILLM, apiKey: string): Record<string, string> {
   };
 }
 
+/**
+ * Intercepts LLM calls to inject session-specific keys and metadata.
+ * Returns enriched options that can be used for logging or custom routing.
+ */
 async function prepareVaultRequest(
   llm: ILLM,
   providerName: string,
@@ -86,6 +96,7 @@ async function prepareVaultRequest(
   options: any,
   input: unknown,
 ): Promise<any> {
+  // Resolve the current key for the global session
   const config = await getSessionApiConfig(
     KEYPOOLLIVE_GLOBAL_SESSION_ID,
     providerName,
@@ -109,11 +120,16 @@ async function prepareVaultRequest(
     (llm as any).model,
     operation,
   );
+
+  // Detect if we are routing through Cloudflare AI Gateway
   const routingMode =
     (llm as any).requestOptions?.headers?.["cf-aig-authorization"] !== undefined
       ? "cloudflare-ai-gateway"
       : "direct";
+
   const headers = getRequestHeaders(llm, activeApiKey);
+
+  // Prepare metadata about the request for debugging/logging
   const keypoolLiveRequest = {
     method: "POST",
     url,
@@ -144,13 +160,15 @@ export function setVaultUrl(url: string, kplConfig?: KeypoolLiveConfig): void {
   currentKplConfig = kplConfig ?? null;
   vaultUrl = url;
   configureSessionKeyManager(url);
+  // Reset cache if configuration parameters changed
   if (JSON.stringify(currentKplConfig) !== prevConfig) {
     cachedVaultLlms = null;
   }
 }
 
 /**
- * Builds ILLM instances from vault configuration
+ * Builds ILLM instances from vault configuration by wrapping standard models.
+ * This dynamically creates the model list that appears in the Continue UI.
  */
 async function buildLlmsFromVault(
   vault: AiVaultConfig,
@@ -168,6 +186,7 @@ async function buildLlmsFromVault(
 
   for (const desc of descriptions) {
     try {
+      // Instantiate the base LLM (e.g., Anthropic, Gemini) from description
       const llmOrPromise = (llmFromDescription as any)(
         desc as any,
         undefined,
@@ -178,17 +197,21 @@ async function buildLlmsFromVault(
       );
       const llm = await Promise.resolve(llmOrPromise);
       if (llm) {
+        // Tag the LLM instance as being vault-managed
         (llm as any)._keypoolVault = true;
         (llm as any)._keypoolProviderName = desc.vaultProviderName;
         (llm as any)._keypoolModelId = desc.vaultModelId;
 
         const providerName = desc.vaultProviderName;
         const modelId = desc.vaultModelId;
+
+        // Save original methods for later call
         const originalStreamChat = llm.streamChat.bind(llm);
         const originalStreamComplete = llm.streamComplete.bind(llm);
         const originalComplete = llm.complete.bind(llm);
         const originalStreamFim = llm.streamFim.bind(llm);
 
+        // Override chat method to inject vault metadata before execution
         (llm as any).streamChat = async function* (
           messages: any,
           signal: AbortSignal,
@@ -211,6 +234,7 @@ async function buildLlmsFromVault(
           );
         };
 
+        // Override complete methods similarly
         (llm as any).streamComplete = async function* (
           prompt: string,
           signal: AbortSignal,
@@ -243,6 +267,7 @@ async function buildLlmsFromVault(
           return originalComplete(prompt, signal, enrichedOptions);
         };
 
+        // Override FIM (Fill-In-the-Middle) method
         (llm as any).streamFim = async function* (
           prefix: string,
           suffix: string,
@@ -274,17 +299,20 @@ async function buildLlmsFromVault(
 }
 
 /**
- * Injects vault models into existing ContinueConfig
+ * Injects vault-sourced models into the main ContinueConfig.
+ * This is the entry point for the KeypoolLive integration in config.ts.
  */
 export async function injectVaultModels(
   config: ContinueConfig,
   ideSettings: any,
   llmLogger: ILLMLogger,
 ): Promise<ContinueConfig> {
+  // Only proceed if a vault URL is configured
   if (!vaultUrl) {
     return config;
   }
 
+  // Decryption secret is required
   if (!process.env.KEYPOOL_LIVE_SECRET) {
     console.warn(
       "[KeypoolLive] KEYPOOL_LIVE_SECRET not set - vault models will not be available",
@@ -294,6 +322,7 @@ export async function injectVaultModels(
 
   let vault: AiVaultConfig;
   try {
+    // Load and decrypt the remote vault
     vault = await loadAiVault(vaultUrl);
     console.log(
       `[KeypoolLive] Loaded vault config version ${vault.version} with ${Object.keys(vault.providers).length} providers`,
@@ -303,6 +332,7 @@ export async function injectVaultModels(
     return config;
   }
 
+  // Create ILLM instances for all models defined in the vault
   const vaultLlms = await buildLlmsFromVault(vault, ideSettings, llmLogger);
 
   if (vaultLlms.length === 0) {
@@ -310,9 +340,8 @@ export async function injectVaultModels(
     return config;
   }
 
+  // Create a copy of the config and add vault models to the relevant roles
   const augmentedConfig = { ...config } as any;
-  // Add vault models to chat/edit/apply roles.
-  // Apply can use chat-capable models as generation backends.
   augmentedConfig.modelsByRole = augmentedConfig.modelsByRole || {};
   augmentedConfig.modelsByRole.chat = [
     ...(augmentedConfig.modelsByRole.chat ?? []),

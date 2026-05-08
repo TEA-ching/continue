@@ -27,20 +27,23 @@ import { loadAiVault } from "./AiVault.js";
 import { markKeyAsFailed, resolveNextApiConfig } from "./KeyPool.js";
 import { AiVaultConfig, ResolvedApiConfig } from "./types.js";
 
+// Maps session-provider-model combinations to specific API configurations
 const sessionKeyMap: Map<string, ResolvedApiConfig> = new Map();
+// Simple cache to store the actual API key string for quick access
 const sessionKeyCache: Map<string, string> = new Map();
 
 let vaultUrl: string | null = null;
 
 /**
- * Configures the vault URL
+ * Configures the vault URL used for fetching and decrypting configurations.
  */
 export function configureSessionKeyManager(url: string): void {
   vaultUrl = url;
 }
 
 /**
- * Gets or creates API config for session
+ * Gets the current API configuration for a session or creates a new one (sticky rotation).
+ * Once a key is assigned to a session/provider/model, it remains assigned until forced to rotate.
  */
 export async function getSessionApiConfig(
   sessionId: string,
@@ -49,6 +52,7 @@ export async function getSessionApiConfig(
 ): Promise<ResolvedApiConfig | null> {
   const sessionKey = `${sessionId}:${providerName}:${modelId ?? "default"}`;
 
+  // Return existing sticky configuration if available
   const existing = sessionKeyMap.get(sessionKey);
   if (existing) {
     return existing;
@@ -61,10 +65,12 @@ export async function getSessionApiConfig(
   let vault: AiVaultConfig;
   try {
     vault = await loadAiVault(vaultUrl);
-  } catch {
+  } catch (error) {
+    console.error("[KeypoolLive] Failed to load vault:", error);
     return null;
   }
 
+  // Pick the next available key and model from the pool
   const resolved = resolveNextApiConfig(vault, providerName, modelId);
   if (resolved) {
     sessionKeyMap.set(sessionKey, resolved);
@@ -78,7 +84,8 @@ export async function getSessionApiConfig(
 }
 
 /**
- * Forces key rotation for session
+ * Forces a key rotation for the specified session and provider.
+ * If the reason is 'key_failure', the current key will be marked as unhealthy.
  */
 export async function rotateSessionKey(
   sessionId: string,
@@ -88,6 +95,7 @@ export async function rotateSessionKey(
 ): Promise<ResolvedApiConfig | null> {
   const sessionKey = `${sessionId}:${providerName}:${modelId ?? "default"}`;
 
+  // If rotation was triggered by an error, tell the KeyPool to stop using this key
   if (reason === "key_failure") {
     const current = sessionKeyMap.get(sessionKey);
     if (current) {
@@ -95,6 +103,7 @@ export async function rotateSessionKey(
     }
   }
 
+  // Clear current mapping to force getSessionApiConfig to pick a new one
   sessionKeyMap.delete(sessionKey);
   sessionKeyCache.delete(`${sessionId}:${providerName}`);
 
@@ -102,7 +111,8 @@ export async function rotateSessionKey(
 }
 
 /**
- * Cleans up session data
+ * Cleans up all data associated with a specific session.
+ * Call this when a chat is deleted or a tab is closed.
  */
 export function cleanupSession(sessionId: string): void {
   for (const key of sessionKeyMap.keys()) {
@@ -118,7 +128,7 @@ export function cleanupSession(sessionId: string): void {
 }
 
 /**
- * Gets session key info
+ * Returns metadata about the key currently assigned to a session.
  */
 export function getSessionKeyInfo(sessionId: string): {
   providerName: string;
@@ -127,6 +137,7 @@ export function getSessionKeyInfo(sessionId: string): {
   modelId: string;
 } | null {
   for (const [compoundKey, config] of sessionKeyMap.entries()) {
+    // Return the first matching config for this session
     if (compoundKey.startsWith(sessionId)) {
       return {
         providerName: config.providerName,
@@ -140,7 +151,7 @@ export function getSessionKeyInfo(sessionId: string): {
 }
 
 /**
- * Gets cached key (synchronous)
+ * Retrieves the raw API key for a session synchronously from the cache.
  */
 export function getCachedSessionKey(
   sessionId: string,

@@ -27,7 +27,7 @@
 /**
  * Message to request key rotation
  */
-export interface FufuniRotateKeyRequest {
+export interface KeypoolliveRotateKeyRequest {
   sessionId: string;
   providerName?: string;
   modelId?: string;
@@ -36,7 +36,7 @@ export interface FufuniRotateKeyRequest {
 /**
  * Response after key rotation
  */
-export interface FufuniRotateKeyResponse {
+export interface KeypoolliveRotateKeyResponse {
   success: boolean;
   newKeyInfo?: {
     providerName: string;
@@ -50,14 +50,14 @@ export interface FufuniRotateKeyResponse {
 /**
  * Message to get current key info
  */
-export interface FufuniGetKeyInfoRequest {
+export interface KeypoolliveGetKeyInfoRequest {
   sessionId: string;
 }
 
 /**
  * Response with key info
  */
-export interface FufuniGetKeyInfoResponse {
+export interface KeypoolliveGetKeyInfoResponse {
   keyInfo: {
     providerName: string;
     keyOwner: string;

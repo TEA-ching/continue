@@ -60,10 +60,12 @@ export async function decryptAiConfig(
     );
   }
 
+  // Extract the salt (8 bytes after the header) and the actual ciphertext
   const salt = raw.slice(8, 16); // bytes 8–15
   const ciphertext = raw.slice(16); // bytes 16–end
 
   // 3. PBKDF2-SHA256 → 48 bytes (32 key + 16 IV), matching -pbkdf2 -iter 100000
+  // Derive the AES key and IV from the password and salt
   const pwBytes = new TextEncoder().encode(password);
   const baseKey = await crypto.subtle.importKey(
     "raw",
@@ -72,6 +74,7 @@ export async function decryptAiConfig(
     false,
     ["deriveBits"],
   );
+  // We need 48 bytes total: 32 bytes for the AES-256 key and 16 bytes for the IV
   const derived = new Uint8Array(
     await crypto.subtle.deriveBits(
       { name: "PBKDF2", hash: "SHA-256", salt, iterations: 100_000 },
@@ -94,8 +97,10 @@ export async function decryptAiConfig(
     ciphertext,
   );
 
+  // Parse the resulting JSON string into an AiConfig object
   return JSON.parse(new TextDecoder().decode(plaintext)) as AiConfig;
 }
+
 /**
  * Decrypts AES-256-GCM encrypted vault
  * Format: base64(IV(12) || Ciphertext(...) || AuthTag(16))
@@ -113,6 +118,7 @@ async function decryptVault(
   const ciphertext = encryptedArray.slice(12, encryptedArray.length - 16);
   const authTag = encryptedArray.slice(encryptedArray.length - 16);
 
+  // Prepare the key material for PBKDF2 derivation
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
     encoder.encode(KEYPOOL_LIVE_SECRET),
@@ -121,6 +127,7 @@ async function decryptVault(
     ["deriveKey"],
   );
 
+  // Derive the AES-GCM key using a hardcoded salt and 100k iterations
   const aesKey = await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -134,6 +141,7 @@ async function decryptVault(
     ["decrypt"],
   );
 
+  // Combine ciphertext and tag as required by the Web Crypto API for AES-GCM decryption
   const ciphertextWithTag = new Uint8Array(ciphertext.length + authTag.length);
   ciphertextWithTag.set(ciphertext, 0);
   ciphertextWithTag.set(authTag, ciphertext.length);
@@ -147,7 +155,7 @@ async function decryptVault(
 }
 
 /**
- * Fetches encrypted vault from public URL
+ * Fetches encrypted vault from public URL with a 10s timeout
  */
 async function fetchEncryptedVault(url: string): Promise<string> {
   const response = await fetch(url, {
@@ -167,6 +175,7 @@ async function fetchEncryptedVault(url: string): Promise<string> {
  * Loads the AI vault configuration with caching
  */
 export async function loadAiVault(vaultUrl: string): Promise<AiVaultConfig> {
+  // Return cached config if it's still fresh (within 5 minutes)
   if (vaultCache && Date.now() - vaultCache.fetchedAt < VAULT_CACHE_TTL_MS) {
     return vaultCache.config;
   }
@@ -179,24 +188,28 @@ export async function loadAiVault(vaultUrl: string): Promise<AiVaultConfig> {
     );
   }
 
+  // Fetch the encrypted content from the remote URL
   const encryptedContent = await fetchEncryptedVault(vaultUrl);
   console.log(
     `[KeypoolLive] Successfully fetched encrypted vault, decrypting... ${encryptedContent.length} bytes received ${encryptedContent.slice(0, 30)}...`,
   );
+  // Decrypt using the OpenSSL-compatible method (AES-256-CBC)
   const aiConfig = await decryptAiConfig(encryptedContent, KEYPOOL_LIVE_SECRET);
   console.log(
     `[KeypoolLive] Vault decryption successful. Loaded config with version ${aiConfig.version} and ${Object.keys(aiConfig.providers).length} providers.`,
   );
+  // Transform the internal AiConfig format to the AiVaultConfig format used by the application
   const config: AiVaultConfig = await getAiVaultConfigFromAiConfig(aiConfig);
 
+  // Update cache
   vaultCache = { config, fetchedAt: Date.now() };
   return config;
 }
 
 /**
- * Converts AiConfig format from Fufuni project to AiVaultConfig format, applying defaults and transformations as needed
- * @param aiConfig
- * @returns
+ * Converts AiConfig format from Keypoollive project to AiVaultConfig format, applying defaults and transformations as needed
+ * @param aiConfig The raw decrypted configuration
+ * @returns The transformed configuration suitable for the application
  */
 export async function getAiVaultConfigFromAiConfig(
   aiConfig: AiConfig,
@@ -207,17 +220,20 @@ export async function getAiVaultConfigFromAiConfig(
     providers: {},
   };
 
+  // Map each provider and its associated keys/models
   for (const [providerName, provider] of Object.entries(aiConfig.providers)) {
     vaultConfig.providers[providerName] = {
       protocol: provider.protocol,
       endpoint: provider.endpoint,
       gatewayEndpoint: provider.gatewayEndpoint,
       gatewayModelPrefix: provider.gatewayModelPrefix,
+      // Map keys with default values for owner and type
       keys: provider.keys.map((key) => ({
         key: key.key,
         owner: key.owner || "unknown",
         type: key.type || "free",
       })),
+      // Map models with default values for usage and tags
       models: provider.models.map((model) => ({
         id: model.id,
         usage: model.usage || "chat",
@@ -233,8 +249,9 @@ export async function getAiVaultConfigFromAiConfig(
 
   return vaultConfig;
 }
+
 /**
- * Clears the vault cache for fresh fetch
+ * Clears the vault cache to force a fresh fetch on the next call to loadAiVault
  */
 export function clearVaultCache(): void {
   vaultCache = null;

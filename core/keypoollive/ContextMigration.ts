@@ -26,7 +26,8 @@
 import { ChatMessage } from "../index.js";
 
 /**
- * Creates a system-level notification for key rotation
+ * Creates a system-level notification for key rotation.
+ * This message is intended to inform the user or the system log about a provider key change.
  */
 export function createKeyRotationNotice(
   previousKeyHint: string,
@@ -50,12 +51,14 @@ export function createKeyRotationNotice(
 }
 
 /**
- * Sanitizes messages for provider compatibility
+ * Sanitizes messages for provider compatibility.
+ * Removes internal KeypoolLive system notices and ensures protocol-specific requirements are met.
  */
 export function sanitizeMessagesForProvider(
   messages: ChatMessage[],
   targetProtocol: "anthropic" | "gemini" | "openai",
 ): ChatMessage[] {
+  // Filter out internal system messages added by KeypoolLive (prefixed with [KeypoolLive])
   let filtered = messages.filter((msg) => {
     if (msg.role === "system") {
       const content = Array.isArray(msg.content)
@@ -66,6 +69,7 @@ export function sanitizeMessagesForProvider(
     return true;
   });
 
+  // Gemini doesn't support multiple consecutive messages with the same role
   if (targetProtocol === "gemini") {
     filtered = mergeConsecutiveMessages(filtered);
   }
@@ -74,13 +78,15 @@ export function sanitizeMessagesForProvider(
 }
 
 /**
- * Merges consecutive messages of same role
+ * Merges consecutive messages of the same role into a single message.
+ * This is particularly important for protocols like Google Gemini.
  */
 function mergeConsecutiveMessages(messages: ChatMessage[]): ChatMessage[] {
   const merged: ChatMessage[] = [];
 
   for (const message of messages) {
     const last = merged[merged.length - 1];
+    // If the current message has the same role as the previous one, merge them
     if (last && last.role === message.role) {
       const lastText = Array.isArray(last.content)
         ? last.content.map((c: any) => c.text ?? "").join("\n")
@@ -93,6 +99,7 @@ function mergeConsecutiveMessages(messages: ChatMessage[]): ChatMessage[] {
         content: `${lastText}\n\n${newText}`,
       };
     } else {
+      // Otherwise, add the message as is
       merged.push(message);
     }
   }

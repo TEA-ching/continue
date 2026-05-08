@@ -31,10 +31,12 @@ import {
 } from "./SessionKeyManager.js";
 
 /**
- * Wraps an ILLM instance to use vault-managed keys
+ * Wraps an ILLM instance to use vault-managed keys.
+ * Uses a Proxy to intercept calls and inject the correct API key for the current session.
+ * Also handles automatic key rotation upon detecting provider errors (auth/rate limits).
  */
 export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
-  // Only wrap KeypoolLive vault models
+  // Only wrap models that have been flagged as KeypoolLive vault models
   if (!(llm as any)._keypoolVault) {
     return llm;
   }
@@ -44,7 +46,7 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
 
   return new Proxy(llm, {
     get(target, prop, receiver) {
-      // Intercept apiKey getter
+      // Intercept apiKey access to return the session-specific key if cached
       if (prop === "apiKey") {
         const cachedKey = getCachedSessionKey(sessionId, providerName);
         return cachedKey ?? Reflect.get(target, prop, receiver);
@@ -52,13 +54,14 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
 
       const original = Reflect.get(target, prop, receiver);
 
-      // Wrap streamChat method
+      // Intercept the main chat streaming method to inject keys and handle retries
       if (prop === "streamChat" && typeof original === "function") {
         return async function* wrappedStreamChat(
           this: any,
           ...args: Parameters<typeof original>
         ) {
           const resolvedModelId = vaultModelId ?? (target as any).model;
+          // Ensure we have a valid key for this session before starting
           const resolved = await getSessionApiConfig(
             sessionId,
             providerName,
@@ -67,13 +70,15 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
 
           if (resolved) {
             const originalApiKey = (target as any).apiKey;
+            // Temporarily swap the key for this specific call
             (target as any).apiKey = resolved.apiKey;
 
             try {
               yield* original.apply(target, args);
             } catch (error: any) {
+              // If the call failed due to a key-related error, try rotating and retrying once
               if (isKeyError(error)) {
-                console.warn(`[KeypoolLive] Key failure, rotating...`);
+                console.warn(`[KeypoolLive] Key failure detected, rotating...`);
                 const newConfig = await rotateSessionKey(
                   sessionId,
                   providerName,
@@ -82,15 +87,19 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
                 );
                 if (newConfig) {
                   (target as any).apiKey = newConfig.apiKey;
+                  // Retry the original call with the new key
                   yield* original.apply(target, args);
                   return;
                 }
               }
+              // If rotation failed or it's not a key error, rethrow
               throw error;
             } finally {
+              // Restore original key state
               (target as any).apiKey = originalApiKey;
             }
           } else {
+            // Fallback to original behavior if vault configuration couldn't be resolved
             yield* original.apply(target, args);
           }
         };
@@ -101,6 +110,10 @@ export function wrapLlmWithVaultKey(llm: ILLM, sessionId: string): ILLM {
   });
 }
 
+/**
+ * Determines if an error is likely caused by a problematic API key.
+ * Triggers rotation for 401 (Auth), 403 (Forbidden), 429 (Rate Limit) or quota errors.
+ */
 function isKeyError(error: any): boolean {
   const message = error?.message?.toLowerCase() ?? "";
   const status = error?.status ?? error?.statusCode ?? 0;

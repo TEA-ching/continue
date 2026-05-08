@@ -11,22 +11,22 @@ const KEYPOOLLIVE_GLOBAL_SESSION_ID = "global";
 /**
  * Type representing a request to rotate a session key
  */
-type FufuniRotateKeyRequest = any;
+type KeypoolliveRotateKeyRequest = any;
 
 /**
  * Type representing a response from a key rotation request
  */
-type FufuniRotateKeyResponse = any;
+type KeypoolliveRotateKeyResponse = any;
 
 /**
  * Type representing a request to get key information
  */
-type FufuniGetKeyInfoRequest = any;
+type KeypoolliveGetKeyInfoRequest = any;
 
 /**
  * Type representing a response containing key information
  */
-type FufuniGetKeyInfoResponse = any;
+type KeypoolliveGetKeyInfoResponse = any;
 
 /**
  * Masks an API key for display purposes by showing only the first and last 6 characters
@@ -55,12 +55,12 @@ export function registerVaultHandlers(
   // Handler for key rotation requests
   webviewProtocol.on(
     "keypoollive/rotateKey" as any,
-    async (msg: { data: FufuniRotateKeyRequest }) => {
+    async (msg: { data: KeypoolliveRotateKeyRequest }) => {
       const { sessionId, providerName, modelId } = msg.data;
       const rotationSessionId = sessionId || KEYPOOLLIVE_GLOBAL_SESSION_ID;
 
       if (!providerName) {
-        const response: FufuniRotateKeyResponse = {
+        const response: KeypoolliveRotateKeyResponse = {
           success: false,
           error: "providerName is required",
         };
@@ -77,7 +77,7 @@ export function registerVaultHandlers(
 
         if (newConfig) {
           const keyHint = maskKeyForDisplay(newConfig.apiKey);
-          const response: FufuniRotateKeyResponse = {
+          const response: KeypoolliveRotateKeyResponse = {
             success: true,
             newKeyInfo: {
               providerName: newConfig.providerName,
@@ -100,13 +100,13 @@ export function registerVaultHandlers(
           return {
             success: false,
             error: "No alternative keys available",
-          } as FufuniRotateKeyResponse;
+          } as KeypoolliveRotateKeyResponse;
         }
       } catch (error: any) {
         return {
           success: false,
           error: error.message ?? "Unknown error",
-        } as FufuniRotateKeyResponse;
+        } as KeypoolliveRotateKeyResponse;
       }
     },
   );
@@ -114,9 +114,9 @@ export function registerVaultHandlers(
   // Handler for key info requests
   webviewProtocol.on(
     "keypoollive/getKeyInfo" as any,
-    async (msg: { data: FufuniGetKeyInfoRequest }) => {
+    async (msg: { data: KeypoolliveGetKeyInfoRequest }) => {
       const info = getSessionKeyInfo(msg.data.sessionId);
-      return { keyInfo: info } as FufuniGetKeyInfoResponse;
+      return { keyInfo: info } as KeypoolliveGetKeyInfoResponse;
     },
   );
 

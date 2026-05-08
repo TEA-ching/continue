@@ -38,30 +38,40 @@ interface KeyStatus {
   failureCount: number;
 }
 
-const KEY_COOLDOWN_MS = 15 * 60 * 1000;
-const MAX_FAILURE_COUNT = 3;
+// Configuration for key health management
+const KEY_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes before retrying a failed key
+const MAX_FAILURE_COUNT = 3; // Maximum consecutive failures before giving up on a key
 
+// Global state for rotation and health tracking
 const roundRobinIndexes: Map<string, number> = new Map();
 const keyStatuses: Map<string, KeyStatus> = new Map();
 
+/**
+ * Generates a unique ID for a key based on provider and a suffix of the key itself.
+ */
 function getKeyStatusId(providerName: string, keyValue: string): string {
   return `${providerName}:${keyValue.slice(-8)}`;
 }
-
+/**
+ * Determines if a key is currently usable based on its health status and cooldown.
+ */
 function isKeyUsable(providerName: string, keyValue: string): boolean {
   const statusId = getKeyStatusId(providerName, keyValue);
   const status = keyStatuses.get(statusId);
 
+  // New keys are always considered usable
   if (!status) {
     return true;
   }
 
+  // If the key is unhealthy, check if the cooldown period has passed
   if (!status.isHealthy) {
     if (
       status.lastFailedAt &&
       Date.now() - status.lastFailedAt > KEY_COOLDOWN_MS &&
       status.failureCount < MAX_FAILURE_COUNT
     ) {
+      // Cooldown expired and we haven't reached max failures, so let's try again
       status.isHealthy = true;
       return true;
     }
@@ -70,9 +80,8 @@ function isKeyUsable(providerName: string, keyValue: string): boolean {
 
   return true;
 }
-
 /**
- * Marks a key as failed for rotation
+ * Marks a key as failed for rotation. This will put the key on cooldown.
  */
 export function markKeyAsFailed(providerName: string, keyValue: string): void {
   const statusId = getKeyStatusId(providerName, keyValue);
@@ -90,10 +99,15 @@ export function markKeyAsFailed(providerName: string, keyValue: string): void {
   );
 }
 
+/**
+ * Selects the next available key for a provider using a round-robin strategy.
+ * Includes a fallback to the least recently failed key if all are on cooldown.
+ */
 function selectNextKey(
   providerName: string,
   keys: VaultKey[],
 ): VaultKey | null {
+  // Filter out expired keys from the pool
   const eligibleKeys = keys.filter((k) => k.type !== "expired");
 
   if (eligibleKeys.length === 0) {
@@ -102,16 +116,19 @@ function selectNextKey(
 
   const currentIndex = roundRobinIndexes.get(providerName) ?? 0;
 
+  // Try to find the next healthy key in round-robin order
   for (let attempt = 0; attempt < eligibleKeys.length; attempt++) {
     const index = (currentIndex + attempt) % eligibleKeys.length;
     const candidate = eligibleKeys[index];
 
     if (isKeyUsable(providerName, candidate.key)) {
+      // Save the next index for this provider and return the candidate
       roundRobinIndexes.set(providerName, (index + 1) % eligibleKeys.length);
       return candidate;
     }
   }
 
+  // Fallback: If all keys are failed/on cooldown, pick the one that failed the longest ago
   console.error(
     `[KeypoolLive] All keys for ${providerName} are on cooldown, using fallback`,
   );
@@ -129,6 +146,9 @@ function selectNextKey(
   return leastRecentlyFailed;
 }
 
+/**
+ * Selects a model from the provider's list, prioritizing chat models and then by priority score.
+ */
 function selectModel(
   models: VaultModel[],
   filterFn?: (model: VaultModel) => boolean,
@@ -140,11 +160,13 @@ function selectModel(
     return null;
   }
 
+  // Return the model with the lowest priority value (lower is higher priority)
   return filtered.sort((a, b) => a.priority - b.priority)[0];
 }
 
 /**
- * Resolves the next API configuration using round-robin
+ * Resolves the next API configuration for a request.
+ * Handles provider selection, key rotation, and model matching.
  */
 export function resolveNextApiConfig(
   vault: AiVaultConfig,
@@ -157,12 +179,14 @@ export function resolveNextApiConfig(
     return null;
   }
 
+  // Rotate to the next available key
   const selectedKey = selectNextKey(providerName, provider.keys);
   if (!selectedKey) {
     console.error(`[KeypoolLive] No usable keys for ${providerName}`);
     return null;
   }
 
+  // Use requested model or pick the default one for the provider
   const model = modelId
     ? (provider.models.find((m) => m.id === modelId) ?? null)
     : selectModel(provider.models);
@@ -201,8 +225,9 @@ export type ModelDescription = {
 };
 
 /**
- * Builds model descriptions from vault, routing through Cloudflare AI Gateway
- * when gateway config is provided and the provider has gatewayEndpoint/gatewayModelPrefix.
+ * Builds model descriptions from vault.
+ * This effectively generates the list of LLMs available in the UI.
+ * Can route through Cloudflare AI Gateway if configured.
  */
 export function buildModelDescriptions(
   vault: AiVaultConfig,
@@ -214,6 +239,7 @@ export function buildModelDescriptions(
   const descriptions: ModelDescription[] = [];
 
   for (const [providerName, provider] of Object.entries(vault.providers)) {
+    // We need at least one valid key to even show the model in the UI
     const initialKey = provider.keys.find((k) => k.type !== "expired");
     if (!initialKey) {
       continue;
@@ -228,6 +254,7 @@ export function buildModelDescriptions(
         provider.gatewayEndpoint &&
         provider.gatewayModelPrefix
       ) {
+        // Gateway configuration: models are presented via an OpenAI-compatible endpoint
         const base = provider.gatewayEndpoint.endsWith("/")
           ? provider.gatewayEndpoint
           : `${provider.gatewayEndpoint}/`;
@@ -252,6 +279,7 @@ export function buildModelDescriptions(
           vaultModelId: model.id,
         });
       } else {
+        // Direct configuration: models use their native protocol (Anthropic, Gemini, etc.)
         const continueProvider = mapToContinueProvider(
           providerName,
           provider.protocol,
@@ -280,6 +308,9 @@ export function buildModelDescriptions(
   return descriptions;
 }
 
+/**
+ * Maps internal provider/protocol names to the identifiers expected by the Continue UI.
+ */
 function mapToContinueProvider(
   providerName: string,
   protocol: string,
@@ -296,7 +327,8 @@ function mapToContinueProvider(
 }
 
 /**
- * Resets all state
+ * Resets all rotation indexes and health statuses.
+ * Used for testing or when the vault is reloaded.
  */
 export function resetKeyPool(): void {
   roundRobinIndexes.clear();
