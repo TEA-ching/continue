@@ -682,6 +682,35 @@ class VsCodeIde implements IDE {
       "remoteConfigServerUrl",
       undefined,
     );
+
+    const kplVaultUrl = settings.get<string>("keypoollive.vaultUrl", "");
+    const kplSecret = settings.get<string>("keypoollive.secret", "");
+    const kplUseGateway = settings.get<boolean>(
+      "keypoollive.useGateway",
+      false,
+    );
+    const kplGatewaySecret = settings.get<string>(
+      "keypoollive.gatewaySecret",
+      "",
+    );
+    const kplGatewayId = settings.get<string>("keypoollive.gatewayId", "");
+    const kplGatewayCacheSkip = settings.get<boolean>(
+      "keypoollive.gatewayCacheSkip",
+      false,
+    );
+
+    const keypoolliveConfig =
+      kplVaultUrl || kplSecret || kplGatewaySecret || kplGatewayId
+        ? {
+            vaultUrl: kplVaultUrl || undefined,
+            secret: kplSecret || undefined,
+            useGateway: kplUseGateway,
+            gatewaySecret: kplGatewaySecret || undefined,
+            gatewayId: kplGatewayId || undefined,
+            gatewayCacheSkip: kplGatewayCacheSkip,
+          }
+        : undefined;
+
     const ideSettings: IdeSettings = {
       remoteConfigServerUrl,
       remoteConfigSyncPeriod: settings.get<number>(
@@ -694,6 +723,7 @@ class VsCodeIde implements IDE {
         "pauseCodebaseIndexOnStart",
         false,
       ),
+      keypoolliveConfig,
     };
     return ideSettings;
   }

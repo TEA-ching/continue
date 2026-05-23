@@ -151,7 +151,34 @@
         "continue.keypoollive.vaultUrl": {
           "type": "string",
           "default": "",
-          "markdownDescription": "URL of the encrypted KeypoolLive AI vault (ai.json.enc) for accessing pooled API keys."
+          "markdownDescription": "URL of the encrypted KeypoolLive AI vault (`ai.json.enc`) for accessing pooled API keys."
+        },
+        "continue.keypoollive.secret": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "Decryption secret for the KeypoolLive AI vault. **Sensitive** — stored locally only, not synced across machines."
+        },
+        "continue.keypoollive.useGateway": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Route KeypoolLive requests through a Cloudflare AI Gateway instead of calling providers directly."
+        },
+        "continue.keypoollive.gatewaySecret": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "markdownDescription": "Cloudflare AI Gateway authorisation token. **Sensitive** — stored locally only, not synced across machines."
+        },
+        "continue.keypoollive.gatewayId": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Cloudflare AI Gateway identifier used when `continue.keypoollive.useGateway` is enabled."
+        },
+        "continue.keypoollive.gatewayCacheSkip": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "When `true`, instructs the Cloudflare AI Gateway to bypass its cache for every request."
         },
         "continue.keypoollive.enabled": {
           "type": "boolean",

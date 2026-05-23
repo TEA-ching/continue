@@ -462,7 +462,7 @@ export default async function doLoadConfig(options: {
     type KeypoolLiveConfig =
       import("../../keypoollive/types.js").KeypoolLiveConfig;
 
-    // Read keypoollive section from config.yaml, then apply env var overrides
+    // Read keypoollive config — priority: env vars > VS Code settings (ideSettings) > config.yaml
     let kplFromYaml: Partial<KeypoolLiveConfig> = {};
     try {
       if (fs.existsSync(configYamlPath)) {
@@ -474,20 +474,34 @@ export default async function doLoadConfig(options: {
       // Ignore — config-yaml handles normal config errors separately
     }
 
+    // VS Code settings (from ideSettings.keypoolliveConfig) take precedence over config.yaml
+    const kplFromIde = ideSettings.keypoolliveConfig ?? {};
+
     const kplConfig: KeypoolLiveConfig = {
-      vaultUrl: process.env.KEYPOOL_LIVE_VAULT_URL || kplFromYaml.vaultUrl,
-      secret: process.env.KEYPOOL_LIVE_SECRET || kplFromYaml.secret,
+      vaultUrl:
+        process.env.KEYPOOL_LIVE_VAULT_URL ||
+        kplFromIde.vaultUrl ||
+        kplFromYaml.vaultUrl,
+      secret:
+        process.env.KEYPOOL_LIVE_SECRET ||
+        kplFromIde.secret ||
+        kplFromYaml.secret,
       useGateway:
         process.env.KEYPOOL_LIVE_USE_GATEWAY !== undefined
           ? process.env.KEYPOOL_LIVE_USE_GATEWAY === "true"
-          : kplFromYaml.useGateway,
+          : (kplFromIde.useGateway ?? kplFromYaml.useGateway),
       gatewaySecret:
-        process.env.KEYPOOL_LIVE_GATEWAY_SECRET || kplFromYaml.gatewaySecret,
-      gatewayId: process.env.KEYPOOL_LIVE_GATEWAY_ID || kplFromYaml.gatewayId,
+        process.env.KEYPOOL_LIVE_GATEWAY_SECRET ||
+        kplFromIde.gatewaySecret ||
+        kplFromYaml.gatewaySecret,
+      gatewayId:
+        process.env.KEYPOOL_LIVE_GATEWAY_ID ||
+        kplFromIde.gatewayId ||
+        kplFromYaml.gatewayId,
       gatewayCacheSkip:
         process.env.KEYPOOL_LIVE_GATEWAY_CACHE_SKIP !== undefined
           ? process.env.KEYPOOL_LIVE_GATEWAY_CACHE_SKIP === "true"
-          : kplFromYaml.gatewayCacheSkip,
+          : (kplFromIde.gatewayCacheSkip ?? kplFromYaml.gatewayCacheSkip),
     };
 
     if (kplConfig.vaultUrl) {

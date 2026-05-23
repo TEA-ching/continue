@@ -817,6 +817,14 @@ export interface IdeSettings {
   userToken: string;
   continueTestEnvironment: "none" | "production" | "staging" | "local";
   pauseCodebaseIndexOnStart: boolean;
+  keypoolliveConfig?: {
+    vaultUrl?: string;
+    secret?: string;
+    useGateway?: boolean;
+    gatewaySecret?: string;
+    gatewayId?: string;
+    gatewayCacheSkip?: boolean;
+  };
 }
 
 export interface FileStats {

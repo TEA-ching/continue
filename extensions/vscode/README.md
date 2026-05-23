@@ -38,7 +38,37 @@ This fork adds **KeypoolLive**, a system that loads AI provider API keys from an
 
 ### Configuration
 
-Add a `keypoollive` block to `~/.continue/config.yaml`:
+#### Option 1 — VS Code Settings (recommended)
+
+Open **File › Preferences › Settings** (or `Ctrl+,` / `Cmd+,`) and search for `continue keypoollive`, or add the following to your `settings.json`:
+
+```jsonc
+{
+  // URL of the encrypted vault — synced across machines via Settings Sync
+  "continue.keypoollive.vaultUrl": "https://your-host/ai.json.enc",
+
+  // AES decryption passphrase — machine-scoped, NOT synced (sensitive)
+  "continue.keypoollive.secret": "<decryption-secret>",
+
+  // Cloudflare AI Gateway
+  "continue.keypoollive.useGateway": true,
+  "continue.keypoollive.gatewayId": "<your-cloudflare-gateway-id>",
+
+  // Gateway auth token — machine-scoped, NOT synced (sensitive)
+  "continue.keypoollive.gatewaySecret": "cfut_xxxxxxxxxxxxxxxxxxxx",
+
+  // Skip Cloudflare cache (optional)
+  "continue.keypoollive.gatewayCacheSkip": false,
+}
+```
+
+> **Settings Sync note:** `vaultUrl`, `useGateway`, `gatewayId`, and `gatewayCacheSkip` are synced across machines. `secret` and `gatewaySecret` have `machine` scope and are intentionally **not** synced to protect sensitive credentials.
+>
+> Workspace-level overrides (`/.vscode/settings.json`) are supported for all non-machine-scoped fields, making per-project gateway configuration possible.
+
+#### Option 2 — `config.yaml` (fallback / non-VS Code environments)
+
+Add a `keypoollive` block to `~/.continue/config.yaml`. This method also works for the CLI and IntelliJ extensions:
 
 ```yaml
 keypoollive:
@@ -47,18 +77,23 @@ keypoollive:
   useGateway: true # Route via Cloudflare AI Gateway
   gatewaySecret: cfut_xxxxxxxxxxxxxxxxxxxx # cf-aig-authorization token
   gatewayId: <your-cloudflare-gateway-id> # Cloudflare account/gateway ID
+  gatewayCacheSkip: false
 ```
 
-All fields can be overridden with environment variables (env takes precedence over YAML):
+#### Option 3 — Environment variables (highest priority)
 
-| YAML field         | Environment variable                               |
-| ------------------ | -------------------------------------------------- |
-| `vaultUrl`         | `KEYPOOL_LIVE_VAULT_URL`                           |
-| `secret`           | `KEYPOOL_LIVE_SECRET`                              |
-| `useGateway`       | `KEYPOOL_LIVE_USE_GATEWAY` (`true`/`false`)        |
-| `gatewaySecret`    | `KEYPOOL_LIVE_GATEWAY_SECRET`                      |
-| `gatewayId`        | `KEYPOOL_LIVE_GATEWAY_ID`                          |
-| `gatewayCacheSkip` | `KEYPOOL_LIVE_GATEWAY_CACHE_SKIP` (`true`/`false`) |
+Environment variables always override both VS Code settings and `config.yaml`:
+
+| Setting                                 | Environment variable                               |
+| --------------------------------------- | -------------------------------------------------- |
+| `continue.keypoollive.vaultUrl`         | `KEYPOOL_LIVE_VAULT_URL`                           |
+| `continue.keypoollive.secret`           | `KEYPOOL_LIVE_SECRET`                              |
+| `continue.keypoollive.useGateway`       | `KEYPOOL_LIVE_USE_GATEWAY` (`true`/`false`)        |
+| `continue.keypoollive.gatewaySecret`    | `KEYPOOL_LIVE_GATEWAY_SECRET`                      |
+| `continue.keypoollive.gatewayId`        | `KEYPOOL_LIVE_GATEWAY_ID`                          |
+| `continue.keypoollive.gatewayCacheSkip` | `KEYPOOL_LIVE_GATEWAY_CACHE_SKIP` (`true`/`false`) |
+
+**Resolution order (highest → lowest):** environment variables › VS Code settings › `config.yaml`
 
 #### Sample ai.json vault format
 
