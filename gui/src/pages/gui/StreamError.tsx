@@ -25,6 +25,17 @@ interface StreamErrorProps {
   error: unknown;
 }
 
+const KEYPOOLLIVE_GLOBAL_SESSION_ID = "global";
+
+function getVaultInfoFromModel(
+  model: any,
+): { providerName: string; modelId: string } | undefined {
+  if (!model?.title?.startsWith("[KeypoolLive]")) return undefined;
+  const match = /^\[KeypoolLive\]\s+([^/]+)\/(.+?)\s*\(/.exec(model.title);
+  if (!match) return undefined;
+  return { providerName: match[1], modelId: match[2] };
+}
+
 const StreamErrorDialog = ({ error }: StreamErrorProps) => {
   const dispatch = useAppDispatch();
   const ideMessenger = useContext(IdeMessengerContext);
@@ -81,7 +92,16 @@ const StreamErrorDialog = ({ error }: StreamErrorProps) => {
   const resubmitButton = (
     <GhostButton
       className="flex items-center"
-      onClick={() => {
+      onClick={async () => {
+        const vaultInfo = getVaultInfoFromModel(selectedModel);
+        if (vaultInfo) {
+          await ideMessenger.request("keypoollive/rotateKey" as any, {
+            sessionId: KEYPOOLLIVE_GLOBAL_SESSION_ID,
+            providerName: vaultInfo.providerName,
+            modelId: vaultInfo.modelId,
+          });
+        }
+
         let index = -1;
         for (let i = history.length - 1; i >= 0; i--) {
           if (

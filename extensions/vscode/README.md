@@ -334,6 +334,7 @@ Each provider entry in the vault can carry `gatewayEndpoint` and `gatewayModelPr
 - Clicking it rotates to the next available key for that provider.
 - A VS Code command `Continue: Rotate KeypoolLive API Key` is also available in the Command Palette.
 - Keys that return 401/403/429 errors are automatically placed on a 15-minute cooldown and skipped in the rotation.
+- When an error dialog is shown for a KeypoolLive model, clicking **Resubmit last message** automatically rotates to the next available key before retrying the request.
 
 ---
 
