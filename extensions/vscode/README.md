@@ -1,5 +1,3 @@
-<div align="center">
-
 ![Continue logo](media/readme.png)
 
 <div align="center">
@@ -396,8 +394,6 @@ Each provider entry in the vault can carry `gatewayEndpoint` and `gatewayModelPr
 [Autocomplete](https://docs.continue.dev/ide-extensions/autocomplete/quick-start) to receive inline code suggestions as you type
 
 ![autocomplete](docs/images/autocomplete.gif)
-
-</div>
 
 ## License
 
