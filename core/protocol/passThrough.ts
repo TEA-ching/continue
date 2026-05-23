@@ -65,6 +65,8 @@ export const WEBVIEW_TO_CORE_PASS_THROUGH: (keyof ToCoreFromWebviewProtocol)[] =
     "conversation/compact",
     "stats/getTokensPerDay",
     "stats/getTokensPerModel",
+    "keypoollive/getUsageStats",
+    "keypoollive/getErrorStats",
     // Codebase
     "index/setPaused",
     "index/forceReIndex",

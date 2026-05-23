@@ -26,11 +26,53 @@
 import { ContinueConfig, ILLM, ILLMLogger } from "../index.js";
 import { loadAiVault } from "./AiVault.js";
 import { buildModelDescriptions } from "./KeyPool.js";
+import { KeypoolUsageDb } from "./KeypoolUsageDb.js";
 import {
   configureSessionKeyManager,
   getSessionApiConfig,
 } from "./SessionKeyManager.js";
 import { AiVaultConfig, KeypoolLiveConfig } from "./types.js";
+
+function maskKeyForDisplay(apiKey: string): string {
+  if (!apiKey || apiKey.length <= 12) return apiKey;
+  return `${apiKey.slice(0, 6)}...${apiKey.slice(-6)}`;
+}
+
+function extractErrorCode(error: any): number | null {
+  for (const v of [error?.status, error?.statusCode, error?.response?.status]) {
+    if (typeof v === "number" && v > 0) return v;
+  }
+  if (typeof error?.message === "string") {
+    const m = /\b([45]\d{2})\b/.exec(error.message);
+    if (m) return parseInt(m[1], 10);
+  }
+  return null;
+}
+
+function messagesToText(messages: any[]): string {
+  return messages
+    .map((m: any) => {
+      if (typeof m.content === "string") return m.content;
+      if (Array.isArray(m.content))
+        return m.content
+          .filter((p: any) => p.type === "text")
+          .map((p: any) => p.text)
+          .join("");
+      return "";
+    })
+    .join("\n");
+}
+
+function chunkText(chunk: any): string {
+  if (chunk.role !== "assistant") return "";
+  if (typeof chunk.content === "string") return chunk.content;
+  if (Array.isArray(chunk.content))
+    return chunk.content
+      .filter((p: any) => p.type === "text")
+      .map((p: any) => p.text)
+      .join("");
+  return "";
+}
 
 let vaultUrl: string | null = null;
 let cachedVaultLlms: ILLM[] | null = null;
@@ -139,6 +181,7 @@ async function prepareVaultRequest(
     continueProvider: (llm as any).providerName,
     continueModel: (llm as any).model,
     apiKey: activeApiKey,
+    keyOwner: config?.keyOwner ?? "unknown",
     headers,
     input,
   };
@@ -226,12 +269,46 @@ async function buildLlmsFromVault(
             options,
             { messages },
           );
-          yield* originalStreamChat(
-            messages,
-            signal,
-            enrichedOptions,
-            messageOptions,
-          );
+          const kplReq = enrichedOptions.keypoolLiveRequest;
+          const completionParts: string[] = [];
+          let apiUsage: any = undefined;
+          try {
+            for await (const chunk of originalStreamChat(
+              messages,
+              signal,
+              enrichedOptions,
+              messageOptions,
+            )) {
+              completionParts.push(chunkText(chunk));
+              if ((chunk as any).usage) apiUsage = (chunk as any).usage;
+              yield chunk;
+            }
+            const promptTokens =
+              apiUsage?.promptTokens ??
+              (llm as any).countTokens?.(messagesToText(messages)) ??
+              0;
+            const completionTokens =
+              apiUsage?.completionTokens ??
+              (llm as any).countTokens?.(completionParts.join("")) ??
+              0;
+            void KeypoolUsageDb.logUsage({
+              provider: kplReq.providerName,
+              modelId: kplReq.modelId,
+              keyOwner: kplReq.keyOwner,
+              keyHint: maskKeyForDisplay(kplReq.apiKey),
+              promptTokens,
+              completionTokens,
+            });
+          } catch (error: any) {
+            void KeypoolUsageDb.logError({
+              provider: kplReq.providerName,
+              modelId: kplReq.modelId,
+              keyOwner: kplReq.keyOwner,
+              keyHint: maskKeyForDisplay(kplReq.apiKey),
+              errorCode: extractErrorCode(error),
+            });
+            throw error;
+          }
         };
 
         // Override complete methods similarly
@@ -248,7 +325,43 @@ async function buildLlmsFromVault(
             options,
             { prompt },
           );
-          yield* originalStreamComplete(prompt, signal, enrichedOptions);
+          const kplReq = enrichedOptions.keypoolLiveRequest;
+          const completionParts: string[] = [];
+          let apiUsage: any = undefined;
+          try {
+            for await (const chunk of originalStreamComplete(
+              prompt,
+              signal,
+              enrichedOptions,
+            )) {
+              if (typeof chunk === "string") completionParts.push(chunk);
+              if ((chunk as any).usage) apiUsage = (chunk as any).usage;
+              yield chunk;
+            }
+            const promptTokens =
+              apiUsage?.promptTokens ?? (llm as any).countTokens?.(prompt) ?? 0;
+            const completionTokens =
+              apiUsage?.completionTokens ??
+              (llm as any).countTokens?.(completionParts.join("")) ??
+              0;
+            void KeypoolUsageDb.logUsage({
+              provider: kplReq.providerName,
+              modelId: kplReq.modelId,
+              keyOwner: kplReq.keyOwner,
+              keyHint: maskKeyForDisplay(kplReq.apiKey),
+              promptTokens,
+              completionTokens,
+            });
+          } catch (error: any) {
+            void KeypoolUsageDb.logError({
+              provider: kplReq.providerName,
+              modelId: kplReq.modelId,
+              keyOwner: kplReq.keyOwner,
+              keyHint: maskKeyForDisplay(kplReq.apiKey),
+              errorCode: extractErrorCode(error),
+            });
+            throw error;
+          }
         };
 
         (llm as any).complete = async function (
@@ -282,7 +395,37 @@ async function buildLlmsFromVault(
             options,
             { prefix, suffix },
           );
-          yield* originalStreamFim(prefix, suffix, signal, enrichedOptions);
+          const kplReq = enrichedOptions.keypoolLiveRequest;
+          const completionParts: string[] = [];
+          try {
+            for await (const chunk of originalStreamFim(
+              prefix,
+              suffix,
+              signal,
+              enrichedOptions,
+            )) {
+              if (typeof chunk === "string") completionParts.push(chunk);
+              yield chunk;
+            }
+            void KeypoolUsageDb.logUsage({
+              provider: kplReq.providerName,
+              modelId: kplReq.modelId,
+              keyOwner: kplReq.keyOwner,
+              keyHint: maskKeyForDisplay(kplReq.apiKey),
+              promptTokens: (llm as any).countTokens?.(prefix + suffix) ?? 0,
+              completionTokens:
+                (llm as any).countTokens?.(completionParts.join("")) ?? 0,
+            });
+          } catch (error: any) {
+            void KeypoolUsageDb.logError({
+              provider: kplReq.providerName,
+              modelId: kplReq.modelId,
+              keyOwner: kplReq.keyOwner,
+              keyHint: maskKeyForDisplay(kplReq.apiKey),
+              errorCode: extractErrorCode(error),
+            });
+            throw error;
+          }
         };
 
         llms.push(llm);

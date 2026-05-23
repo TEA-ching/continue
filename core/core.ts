@@ -12,6 +12,7 @@ import { addModel, deleteModel } from "./config/util";
 import { getAuthUrlForTokenPage } from "./control-plane/auth/index";
 import { getControlPlaneEnv } from "./control-plane/env";
 import { DevDataSqliteDb } from "./data/devdataSqlite";
+import { KeypoolUsageDb } from "./keypoollive/KeypoolUsageDb";
 import { DataLogger } from "./data/log";
 import { CodebaseIndexer } from "./indexing/CodebaseIndexer";
 import DocsService from "./indexing/docs/DocsService";
@@ -862,6 +863,13 @@ export class Core {
     on("stats/getTokensPerModel", async (msg) => {
       const rows = await DevDataSqliteDb.getTokensPerModel();
       return rows;
+    });
+
+    on("keypoollive/getUsageStats", async (msg) => {
+      return KeypoolUsageDb.getUsageStats(msg.data.period);
+    });
+    on("keypoollive/getErrorStats", async (msg) => {
+      return KeypoolUsageDb.getErrorStats(msg.data.period);
     });
 
     on("index/forceReIndex", async ({ data }) => {

@@ -8,6 +8,7 @@ import ConfigPage from "./pages/config";
 import ErrorPage from "./pages/error";
 import Chat from "./pages/gui";
 import History from "./pages/history";
+import KeypoolDashboard from "./pages/keypoollive/KeypoolDashboard";
 import Stats from "./pages/stats";
 import ThemePage from "./styles/ThemePage";
 import { ROUTES } from "./util/navigation";
@@ -33,6 +34,10 @@ const router = createMemoryRouter([
       {
         path: ROUTES.STATS,
         element: <Stats />,
+      },
+      {
+        path: ROUTES.KEYPOOLLIVE_DASHBOARD,
+        element: <KeypoolDashboard />,
       },
       {
         path: ROUTES.CONFIG,

@@ -10,6 +10,7 @@ import {
   modelSupportsReasoning,
 } from "core/llm/autodetect";
 import { memo, useContext, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { IdeMessengerContext } from "../../context/IdeMessenger";
 import { VaultKeyRotateButton } from "../../keypoollive/VaultKeyRotateButton";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -19,6 +20,7 @@ import { setHasReasoningEnabled } from "../../redux/slices/sessionSlice";
 import { setReasoningSetting } from "../../redux/slices/uiSlice";
 import { exitEdit } from "../../redux/thunks/edit";
 import { getMetaKeyLabel, isMetaEquivalentKeyPressed } from "../../util";
+import { ROUTES } from "../../util/navigation";
 import { ToolTip } from "../gui/Tooltip";
 import ModelSelect from "../modelSelection/ModelSelect";
 import { ModeSelect } from "../ModeSelect";
@@ -65,6 +67,7 @@ function getVaultInfoFromModel(
 function InputToolbar(props: InputToolbarProps) {
   const dispatch = useAppDispatch();
   const ideMessenger = useContext(IdeMessengerContext);
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const defaultModel = useAppSelector(selectSelectedChatModel);
   const useActiveFile = useAppSelector(selectUseActiveFile);
@@ -131,6 +134,26 @@ function InputToolbar(props: InputToolbarProps) {
               disabled={!currentSessionId}
               disabledReason="KeypoolLive: rotation requires an active chat session"
             />
+          )}
+          {/* KEYPOOLLIVE VAULT: Dashboard link */}
+          {vaultInfo && (
+            <button
+              onClick={() => navigate(ROUTES.KEYPOOLLIVE_DASHBOARD)}
+              title="KeypoolLive Usage Dashboard"
+              style={{
+                background: "none",
+                border: "1px solid var(--vscode-button-border, #555)",
+                borderRadius: "3px",
+                padding: "2px 5px",
+                cursor: "pointer",
+                color: "var(--vscode-foreground)",
+                fontSize: "11px",
+                lineHeight: 1,
+              }}
+              aria-label="Open KeypoolLive usage dashboard"
+            >
+              📊
+            </button>
           )}
           <div className="xs:flex text-description -mb-1 hidden items-center transition-colors duration-200">
             {props.toolbarOptions?.hideImageUpload ||

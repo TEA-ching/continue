@@ -369,6 +369,19 @@ Each provider entry in the vault can carry `gatewayEndpoint` and `gatewayModelPr
 - Keys that return 401/403/429 errors are automatically placed on a 15-minute cooldown and skipped in the rotation.
 - When an error dialog is shown for a KeypoolLive model, clicking **Resubmit last message** automatically rotates to the next available key before retrying the request.
 
+### Usage dashboard
+
+A **📊** button appears in the chat input toolbar alongside the key rotation button whenever a vault model is selected. Clicking it opens the KeypoolLive Usage Dashboard at `/keypoollive/dashboard`.
+
+The dashboard provides:
+
+- **Period selector** — view data aggregated over the last hour, 24 hours, 7 days, or 30 days.
+- **Token Usage by Key** — stacked bar chart (prompt vs. completion tokens over time) and a summary table showing prompt tokens, completion tokens, total tokens, and request count broken down by key owner, key hint, and provider. Useful for billing each key owner.
+- **Error Rates by Key** — table showing total requests, error count, error rate (with a colour-coded bar: green < 5 %, yellow < 20 %, red ≥ 20 %), and last observed HTTP error code per key.
+- **Export CSV** — each section has a one-click CSV export for offline analysis or invoice reconciliation.
+
+Token counts are recorded at the end of every streaming call using the same local tokenizer as Continue's built-in stats page. If the provider returns explicit usage data in the stream, that value is preferred.
+
 ---
 
 ## VS Code Agent

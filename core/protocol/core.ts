@@ -273,6 +273,30 @@ export type ToCoreFromIdeOrWebviewProtocol = {
     undefined,
     { model: string; promptTokens: number; generatedTokens: number }[],
   ];
+  "keypoollive/getUsageStats": [
+    { period: "hour" | "day" | "week" | "month" },
+    {
+      period: string;
+      provider: string;
+      keyOwner: string;
+      keyHint: string;
+      promptTokens: number;
+      completionTokens: number;
+      requestCount: number;
+    }[],
+  ];
+  "keypoollive/getErrorStats": [
+    { period: "hour" | "day" | "week" | "month" },
+    {
+      provider: string;
+      keyOwner: string;
+      keyHint: string;
+      totalRequests: number;
+      errorCount: number;
+      errorRate: number;
+      lastErrorCode: number | null;
+    }[],
+  ];
   "tts/kill": [undefined, void];
 
   // Codebase indexing
