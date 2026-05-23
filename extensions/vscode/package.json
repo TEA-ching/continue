@@ -1,7 +1,7 @@
 {
   "name": "continue",
   "icon": "media/icon.png",
-  "author": "Continue Dev, Inc",
+  "author": "KeytoolLive Dev, Inc",
   "version": "1.3.39",
   "repository": {
     "type": "git",
@@ -18,7 +18,7 @@
   "homepage": "https://continue.dev",
   "qna": "https://github.com/continuedev/continue/issues/new/choose",
   "license": "Apache-2.0",
-  "displayName": "Continue - open-source AI code agent",
+  "displayName": "KeytoolLive - open-source AI code agent",
   "pricing": "Free",
   "description": "The leading open-source AI code agent",
   "publisher": "Tea-ching",
@@ -84,19 +84,19 @@
       }
     ],
     "configuration": {
-      "title": "Continue",
+      "title": "KeytoolLive",
       "properties": {
         "continue.telemetryEnabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Continue collects anonymous usage data, cleaned of PII, to help us improve the product for our users. Read more  at [continue.dev › Telemetry](https://docs.continue.dev/telemetry).",
+          "markdownDescription": "KeytoolLive collects anonymous usage data, cleaned of PII, to help us improve the product for our users. Read more  at [continue.dev › Telemetry](https://docs.continue.dev/telemetry).",
           "markdownDeprecationMessage": "This setting is deprecated and will be removed in a later version. Please use the _Telemetry > Allow Anonymous Telemetry_ setting in the extension's User Settings page.",
           "deprecationMessage": "Please use the _Telemetry > Allow Anonymous Telemetry_ setting in the extension's User Settings page."
         },
         "continue.showInlineTip": {
           "type": "boolean",
           "default": true,
-          "description": "Show inline suggestion to use the Continue keyboard shortcuts (e.g. \"Cmd/Ctrl L to select code, Cmd/Ctrl I to edit\")."
+          "description": "Show inline suggestion to use the KeytoolLive keyboard shortcuts (e.g. \"Cmd/Ctrl L to select code, Cmd/Ctrl I to edit\")."
         },
         "continue.disableQuickFix": {
           "type": "boolean",
@@ -111,22 +111,22 @@
         "continue.enableTabAutocomplete": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Enable Continue's tab autocomplete feature. Read our walkthrough to learn about configuration and how to share feedback: [continue.dev › Walkthrough: Tab Autocomplete (beta)](https://docs.continue.dev/features/tab-autocomplete)"
+          "markdownDescription": "Enable KeytoolLive's tab autocomplete feature. Read our walkthrough to learn about configuration and how to share feedback: [continue.dev › Walkthrough: Tab Autocomplete (beta)](https://docs.continue.dev/features/tab-autocomplete)"
         },
         "continue.enableNextEdit": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Enable Continue's next edit feature. Read our docs to learn about configuration and how to share feedback: [continue.dev › Features › Autocomplete › Next Edit (experimental)](https://docs.continue.dev/features/autocomplete/next-edit)"
+          "markdownDescription": "Enable KeytoolLive's next edit feature. Read our docs to learn about configuration and how to share feedback: [continue.dev › Features › Autocomplete › Next Edit (experimental)](https://docs.continue.dev/features/autocomplete/next-edit)"
         },
         "continue.pauseTabAutocompleteOnBattery": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Pause Continue's tab autocomplete feature when your battery is low."
+          "markdownDescription": "Pause KeytoolLive's tab autocomplete feature when your battery is low."
         },
         "continue.pauseCodebaseIndexOnStart": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Pause Continue's codebase index on start."
+          "markdownDescription": "Pause KeytoolLive's codebase index on start."
         },
         "continue.enableConsole": {
           "type": "boolean",
@@ -156,247 +156,247 @@
         "continue.keypoollive.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable KeypoolLive vault models in Continue."
+          "description": "Enable KeypoolLive vault models in KeytoolLive."
         }
       }
     },
     "commands": [
       {
         "command": "continue.applyCodeFromChat",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Apply code from chat",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.acceptDiff",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Accept Diff",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.rejectDiff",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Reject Diff",
-        "group": "Continue",
+        "group": "KeytoolLive",
         "icon": "$(stop)"
       },
       {
         "command": "continue.acceptVerticalDiffBlock",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Accept Vertical Diff Block",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.rejectVerticalDiffBlock",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Reject Vertical Diff Block",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.focusEdit",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Add to Edit",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.focusContinueInput",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Add Highlighted Code to Context and Clear Chat",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.focusContinueInputWithoutClear",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Add to Chat",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.debugTerminal",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Debug Terminal",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.exitEditMode",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Exit Edit Mode",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.openConfigPage",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Open Settings",
         "icon": "$(gear)",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.toggleTabAutocompleteEnabled",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Toggle Autocomplete Enabled",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.forceAutocomplete",
-        "title": "Continue: Force Autocomplete",
-        "category": "Continue"
+        "title": "KeytoolLive: Force Autocomplete",
+        "category": "KeytoolLive"
       },
       {
         "command": "continue.selectFilesAsContext",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Select Files as Context",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.newSession",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "New Session",
         "icon": "$(add)",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.shareSession",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Share Current Chat Session as Markdown",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.viewHistory",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "View History",
         "icon": "$(history)",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.viewLogs",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "View Logs",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.clearConsole",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Clear Console",
         "icon": "$(clear-all)",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.navigateTo",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Navigate to a path",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.writeCommentsForCode",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Write Comments for this Code",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.writeDocstringForCode",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Write a Docstring for this Code",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.fixCode",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Fix this Code",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.optimizeCode",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Optimize this Code",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.fixGrammar",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Fix Grammar / Spelling",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.codebaseForceReIndex",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Codebase Force Re-Index",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.rebuildCodebaseIndex",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Rebuild codebase index",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.docsIndex",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Docs Index",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.docsReIndex",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Docs Force Re-Index",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.focusContinueInput",
-        "category": "Continue",
-        "title": "Focus Continue Chat",
-        "group": "Continue"
+        "category": "KeytoolLive",
+        "title": "Focus KeytoolLive Chat",
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.enterEnterpriseLicenseKey",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Enter Enterprise License Key",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.toggleNextEditEnabled",
-        "title": "Continue: Toggle Next Edit"
+        "title": "KeytoolLive: Toggle Next Edit"
       },
       {
         "command": "continue.nextEditWindow.hideNextEditSuggestion",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Hide Next Edit Suggestion"
       },
       {
         "command": "continue.nextEditWindow.acceptNextEditSuggestion",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Accept Next Edit Suggestion"
       },
       {
         "command": "continue.forceNextEdit",
-        "category": "Continue",
-        "title": "Continue: Force Next Edit"
+        "category": "KeytoolLive",
+        "title": "KeytoolLive: Force Next Edit"
       },
       {
         "command": "continue.acceptJump",
-        "category": "Continue",
-        "title": "Continue: Accept Jump Suggestion"
+        "category": "KeytoolLive",
+        "title": "KeytoolLive: Accept Jump Suggestion"
       },
       {
         "command": "continue.rejectJump",
-        "category": "Continue",
-        "title": "Continue: Reject Jump Suggestion"
+        "category": "KeytoolLive",
+        "title": "KeytoolLive: Reject Jump Suggestion"
       },
       {
         "command": "continue.generateRule",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Generate Rule",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.openInNewWindow",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Open in new window",
-        "group": "Continue"
+        "group": "KeytoolLive"
       },
       {
         "command": "continue.keypoollive.rotateKey",
-        "category": "Continue",
+        "category": "KeytoolLive",
         "title": "Rotate KeypoolLive API Key",
-        "group": "Continue"
+        "group": "KeytoolLive"
       }
     ],
     "keybindings": [
@@ -520,7 +520,7 @@
     "submenus": [
       {
         "id": "continue.continueSubMenu",
-        "label": "Continue"
+        "label": "KeytoolLive"
       }
     ],
     "menus": {
@@ -556,18 +556,18 @@
       "editor/title/run": [
         {
           "command": "continue.rejectDiff",
-          "group": "Continue",
+          "group": "KeytoolLive",
           "when": "continue.streamingDiff"
         }
       ],
       "continue.continueSubMenu": [
         {
           "command": "continue.focusContinueInputWithoutClear",
-          "group": "Continue"
+          "group": "KeytoolLive"
         },
         {
           "command": "continue.focusEdit",
-          "group": "Continue",
+          "group": "KeytoolLive",
           "when": "!editorReadonly"
         }
       ],
@@ -622,14 +622,14 @@
       "activitybar": [
         {
           "id": "continue",
-          "title": "Continue",
+          "title": "KeytoolLive",
           "icon": "media/sidebar-icon.png"
         }
       ],
       "panel": [
         {
           "id": "continueConsole",
-          "title": "Continue Console",
+          "title": "KeytoolLive Console",
           "icon": "$(window)"
         }
       ]
@@ -639,7 +639,7 @@
         {
           "type": "webview",
           "id": "continue.continueGUIView",
-          "name": "Continue",
+          "name": "KeytoolLive",
           "icon": "media/sidebar-icon.png",
           "visibility": "visible"
         }
@@ -648,7 +648,7 @@
         {
           "type": "webview",
           "id": "continue.continueConsoleView",
-          "name": "Continue Console",
+          "name": "KeytoolLive Console",
           "icon": "$(window)",
           "visibility": "visible",
           "when": "config.continue.enableConsole"
